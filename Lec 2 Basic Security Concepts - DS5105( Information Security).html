@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DS 5105 :: Basic Security Concepts</title>
+<style>
+:root{
+  --void:#0A0E14;
+  --panel:#121821;
+  --panel2:#171F2A;
+  --panel3:#1D2632;
+  --line:#25303D;
+  --line-soft:#1C2530;
+  --text:#E9EEF4;
+  --muted:#8B98A7;
+  --muted2:#5E6B79;
+  --confid:#3FD0C9;
+  --confid-dim:#1C4643;
+  --integ:#EBA847;
+  --integ-dim:#4A3A1C;
+  --avail:#6FCF97;
+  --avail-dim:#1F3F30;
+  --trudy:#EA5C68;
+  --trudy-dim:#4A2226;
+  --alice:#A497FF;
+  --bob:#5FA6FF;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --sans: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -5%, rgba(63,208,201,0.08), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 90% 10%, rgba(95,166,255,0.07), transparent 55%),
+    var(--void);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--confid);color:#04211f;}
+a{color:var(--confid);}
+
+/* ---------- scaffolding ---------- */
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted2);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.eyebrow .tag{
+  border:1px solid var(--line);
+  padding:2px 8px;
+  border-radius:3px;
+  color:var(--muted);
+}
+h1,h2,h3{font-family:var(--mono); font-weight:700; letter-spacing:-0.01em; margin:0;}
+.section{padding:88px 0; border-bottom:1px solid var(--line-soft);}
+.section:last-of-type{border-bottom:none;}
+.section h2{font-size:28px; color:var(--text);}
+.section .lede{color:var(--muted); max-width:640px; font-size:16px; margin-top:14px;}
+.hexnum{color:var(--muted2); font-weight:400;}
+p{color:#C7D0D9; font-size:15.5px;}
+strong{color:var(--text);}
+code{font-family:var(--mono); background:var(--panel2); padding:1px 6px; border-radius:4px; font-size:0.9em; border:1px solid var(--line);}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(10px);
+  background:rgba(10,14,20,0.82);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:960px;margin:0 auto;padding:0 24px;
+  height:52px; display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--mono); font-size:12px; color:var(--muted);
+}
+.topbar-inner .brand{color:var(--text); letter-spacing:.06em;}
+.topbar-inner .brand b{color:var(--confid);}
+.progress-track{position:absolute; bottom:-1px; left:0; height:2px; width:100%; background:transparent;}
+.progress-bar{height:2px; width:0%; background:linear-gradient(90deg,var(--confid),var(--bob)); transition:width .1s linear;}
+
+/* ---------- hero ---------- */
+.hero{padding:76px 0 60px;}
+.hero-top{display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;}
+.hero h1{font-size:40px; line-height:1.15; max-width:680px;}
+.hero h1 .accent{color:var(--confid);}
+.hero .sub{color:var(--muted); font-size:16px; max-width:560px; margin-top:16px;}
+.module-badge{
+  font-family:var(--mono); font-size:11px; color:var(--muted);
+  border:1px solid var(--line); border-radius:6px; padding:10px 14px;
+  white-space:nowrap;
+}
+.module-badge .code{color:var(--confid); font-size:14px; display:block; margin-bottom:2px;}
+
+/* hero network stage */
+.stage{
+  margin-top:44px; border:1px solid var(--line); border-radius:10px;
+  background:linear-gradient(180deg, var(--panel), var(--panel2));
+  padding:28px 20px 22px; position:relative; overflow:hidden;
+}
+.stage-label{position:absolute; top:12px; left:16px; font-family:var(--mono); font-size:10px; color:var(--muted2); letter-spacing:.1em; text-transform:uppercase;}
+.stage-label2{position:absolute; top:12px; right:16px; font-family:var(--mono); font-size:10px; color:var(--muted2);}
+svg{display:block;}
+.node-label{font-family:var(--mono); font-size:12px; fill:var(--text); font-weight:700;}
+.node-sub{font-family:var(--mono); font-size:9px; fill:var(--muted2);}
+.wire{stroke:var(--line); stroke-width:1.5; fill:none; stroke-dasharray:4 4;}
+.packet{filter:drop-shadow(0 0 6px rgba(63,208,201,.6));}
+
+@keyframes flowAB{
+  0%{ offset-distance:0%; opacity:0;}
+  6%{opacity:1;}
+  46%{opacity:1;}
+  50%{offset-distance:50%; opacity:0;}
+  100%{offset-distance:50%; opacity:0;}
+}
+@keyframes pulse{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.14); }
+}
+.pulse{animation:pulse 2.2s ease-in-out infinite;}
+
+/* ---------- character legend ---------- */
+.cast{display:flex; gap:14px; margin-top:26px; flex-wrap:wrap;}
+.cast-card{
+  flex:1; min-width:170px; border:1px solid var(--line); border-radius:8px; padding:14px 14px;
+  background:var(--panel); display:flex; gap:12px; align-items:center;
+}
+.cast-dot{width:34px;height:34px;border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px;}
+.cast-card.alice .cast-dot{background:rgba(164,151,255,.15); color:var(--alice); border:1px solid rgba(164,151,255,.4);}
+.cast-card.bob .cast-dot{background:rgba(95,166,255,.15); color:var(--bob); border:1px solid rgba(95,166,255,.4);}
+.cast-card.trudy .cast-dot{background:rgba(234,92,104,.15); color:var(--trudy); border:1px solid rgba(234,92,104,.4);}
+.cast-card .name{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--text);}
+.cast-card .role{font-size:12px; color:var(--muted);}
+
+/* ---------- CIA triangle interactive ---------- */
+.triad-shell{display:grid; grid-template-columns:340px 1fr; gap:28px; margin-top:36px; align-items:start;}
+@media(max-width:760px){.triad-shell{grid-template-columns:1fr;}}
+.triad-svg-box{border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:18px;}
+.vertex{cursor:pointer;}
+.vertex circle{transition:all .25s ease;}
+.vertex text{font-family:var(--mono); font-weight:700; font-size:13px; cursor:pointer;}
+.vertex.active circle.outer{filter:drop-shadow(0 0 10px currentColor);}
+.tri-edge{stroke:var(--line); stroke-width:1.5; fill:none;}
+
+.triad-detail{border:1px solid var(--line); border-radius:10px; padding:24px; background:var(--panel); min-height:360px;}
+.triad-detail .kicker{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;}
+.triad-detail h3{font-size:22px; margin-top:6px; color:var(--text);}
+.triad-detail .def{color:var(--muted); margin-top:8px; font-size:14.5px;}
+.pill-row{display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;}
+.pill{font-family:var(--mono); font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--line); color:var(--muted);}
+
+.scenario-box{margin-top:20px; border-top:1px dashed var(--line); padding-top:18px;}
+.scenario-box .scenario-title{font-family:var(--mono); font-size:12px; color:var(--muted2); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;}
+.scenario-anim{border:1px solid var(--line); border-radius:8px; padding:16px; background:var(--panel2); position:relative; min-height:150px;}
+.scenario-caption{margin-top:10px; font-size:13.5px; color:var(--muted);}
+.btn{
+  font-family:var(--mono); font-size:12px; background:var(--panel3); color:var(--text);
+  border:1px solid var(--line); padding:8px 14px; border-radius:6px; cursor:pointer;
+  transition:all .15s ease;
+}
+.btn:hover{border-color:var(--confid); color:var(--confid);}
+.btn.active{background:var(--confid-dim); border-color:var(--confid); color:var(--confid);}
+.btn-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+
+/* ---------- toggle switch ---------- */
+.switch-row{display:flex; align-items:center; gap:10px; margin-top:12px; font-family:var(--mono); font-size:12px; color:var(--muted);}
+.switch{width:42px; height:22px; border-radius:20px; background:var(--panel3); border:1px solid var(--line); position:relative; cursor:pointer; flex-shrink:0;}
+.switch .knob{position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:all .2s ease;}
+.switch.on{background:var(--confid-dim); border-color:var(--confid);}
+.switch.on .knob{left:22px; background:var(--confid);}
+
+/* ---------- extended goals cards ---------- */
+.ext-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:32px;}
+@media(max-width:760px){.ext-grid{grid-template-columns:1fr;}}
+.ext-card{
+  border:1px solid var(--line); border-radius:10px; padding:20px; background:var(--panel);
+  cursor:pointer; transition:border-color .2s ease, transform .2s ease;
+}
+.ext-card:hover{border-color:var(--muted2); transform:translateY(-2px);}
+.ext-card .icon-row{display:flex; justify-content:space-between; align-items:center;}
+.ext-card .num{font-family:var(--mono); font-size:11px; color:var(--muted2);}
+.ext-card h4{font-family:var(--mono); font-size:16px; margin-top:12px; color:var(--text);}
+.ext-card p.short{font-size:13.5px; color:var(--muted); margin-top:8px;}
+.ext-card .expand{
+  max-height:0; overflow:hidden; transition:max-height .35s ease; font-size:13.5px; color:var(--muted);
+}
+.ext-card.open .expand{max-height:600px; margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+.ext-card .caret{font-family:var(--mono); color:var(--muted2); transition:transform .25s ease; font-size:12px;}
+.ext-card.open .caret{transform:rotate(45deg); color:var(--confid);}
+
+/* signature sign animation */
+.sig-stage{border:1px solid var(--line); border-radius:8px; background:var(--panel2); padding:14px; margin-top:10px;}
+.sig-doc{font-family:var(--mono); font-size:11px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; padding:10px; background:var(--panel);}
+.sig-hash{color:var(--integ); font-family:var(--mono); font-size:11px; margin-top:8px; word-break:break-all;}
+
+/* ---------- AAA pipeline ---------- */
+.aaa-pipeline{display:flex; gap:0; margin-top:36px; border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+@media(max-width:760px){.aaa-pipeline{flex-direction:column;}}
+.aaa-step{
+  flex:1; padding:22px 18px; background:var(--panel); border-right:1px solid var(--line); cursor:pointer;
+  position:relative; transition:background .2s ease;
+}
+.aaa-step:last-child{border-right:none;}
+@media(max-width:760px){.aaa-step{border-right:none; border-bottom:1px solid var(--line);}}
+.aaa-step.active{background:var(--panel3);}
+.aaa-step .step-idx{font-family:var(--mono); font-size:11px; color:var(--muted2);}
+.aaa-step h4{font-family:var(--mono); font-size:15px; margin-top:8px;}
+.aaa-step p{font-size:12.5px; color:var(--muted); margin-top:6px;}
+.aaa-step .q{font-family:var(--mono); font-size:11px; color:var(--muted2); margin-top:10px; font-style:normal;}
+.aaa-arrow{position:absolute; right:-11px; top:50%; transform:translateY(-50%); z-index:5; color:var(--muted2); font-size:14px;}
+@media(max-width:760px){.aaa-arrow{display:none;}}
+
+.aaa-console{
+  margin-top:0; border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px;
+  background:#0D1218; padding:20px; font-family:var(--mono); font-size:12.5px; color:var(--muted);
+  min-height:120px;
+}
+.aaa-console .line{margin-bottom:6px; opacity:0; animation:typeIn .3s ease forwards;}
+@keyframes typeIn{ to{opacity:1;} }
+.aaa-console .ok{color:var(--avail);}
+.aaa-console .warn{color:var(--integ);}
+.aaa-console .deny{color:var(--trudy);}
+.aaa-console .sys{color:var(--muted2);}
+
+/* ---------- IAM lifecycle ---------- */
+.iam-wheel{display:flex; gap:24px; margin-top:36px; align-items:flex-start; flex-wrap:wrap;}
+.iam-ring{flex-shrink:0;}
+.iam-panel{flex:1; min-width:280px; border:1px solid var(--line); border-radius:10px; padding:22px; background:var(--panel); min-height:220px;}
+.iam-panel .kicker{font-family:var(--mono); font-size:11px; color:var(--muted2); letter-spacing:.1em; text-transform:uppercase;}
+.iam-panel h4{font-size:19px; margin-top:6px; font-family:var(--mono);}
+.iam-panel p{margin-top:10px; font-size:14px; color:var(--muted);}
+.iam-node{cursor:pointer;}
+.iam-node text{font-family:var(--mono); font-size:10px; fill:var(--muted); transition:fill .2s ease;}
+.iam-node.active text{fill:var(--confid); font-weight:700;}
+.iam-node circle{transition:all .2s ease;}
+
+/* ---------- comparison table ---------- */
+table{width:100%; border-collapse:collapse; margin-top:30px; font-size:13.5px;}
+th,td{border:1px solid var(--line); padding:12px 14px; text-align:left; vertical-align:top;}
+th{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:var(--panel2);}
+td{color:#C7D0D9;}
+tr:hover td{background:var(--panel2);}
+.dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px;}
+
+/* ---------- quiz ---------- */
+.quiz-card{border:1px solid var(--line); border-radius:10px; padding:24px; background:var(--panel); margin-top:30px;}
+.quiz-q{margin-bottom:22px;}
+.quiz-q .qtext{font-size:15px; color:var(--text); margin-bottom:10px; font-family:var(--sans); font-weight:600;}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  border:1px solid var(--line); border-radius:6px; padding:10px 14px; font-size:13.5px; cursor:pointer;
+  transition:all .15s ease; color:var(--muted);
+}
+.quiz-opt:hover{border-color:var(--muted2);}
+.quiz-opt.correct{border-color:var(--avail); background:var(--avail-dim); color:var(--avail);}
+.quiz-opt.wrong{border-color:var(--trudy); background:var(--trudy-dim); color:var(--trudy);}
+.quiz-opt.disabled{pointer-events:none;}
+.quiz-feedback{font-family:var(--mono); font-size:12px; margin-top:8px; min-height:16px;}
+.quiz-score{font-family:var(--mono); font-size:13px; color:var(--muted); margin-top:6px; text-align:right;}
+
+/* ---------- recap ---------- */
+.recap-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:28px;}
+@media(max-width:700px){.recap-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.recap-grid{grid-template-columns:1fr;}}
+.recap-item{border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--panel); font-family:var(--mono); font-size:12px; color:var(--muted);}
+.recap-item b{display:block; color:var(--text); font-size:13px; margin-bottom:4px;}
+
+footer{padding:40px 0 70px; text-align:center; color:var(--muted2); font-family:var(--mono); font-size:11.5px;}
+
+.key-hint{font-family:var(--mono); font-size:11px; color:var(--muted2); margin-top:8px;}
+
+@media(prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="brand"><b>DS 5105</b> // Information Security</span>
+    <span>Module 01 — Fundamental Aspects of Security</span>
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+</div>
+
+<!-- ============================================================ HERO ============================================================ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow"><span class="tag">0x00</span> Lecture Note</div>
+        <h1>Basic Security Concepts<br><span class="accent">&amp; the CIA Triad</span></h1>
+        <p class="sub">Every control, policy and attack in this course traces back to a small set of ideas.
+        This note walks through them interactively — with <b style="color:var(--alice)">Alice</b>,
+        <b style="color:var(--bob)">Bob</b> and <b style="color:var(--trudy)">Trudy</b> acting out each scenario
+        so you can see, not just read, what each concept protects against.</p>
+      </div>
+      <div class="module-badge">
+        <span class="code">DS 5105</span>
+        Information Security<br>Module 01 · Foundations
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-label">fig 0.1 — channel under observation</div>
+      <div class="stage-label2" id="clockLabel">t = 0s</div>
+      <svg viewBox="0 0 860 220" width="100%" height="220" id="heroSvg">
+        <path id="pathAB" class="wire" d="M 130,110 C 320,60 540,60 730,110" />
+        <path id="pathTrudy" class="wire" d="M 430,180 L 430,120" stroke-dasharray="2 4"/>
+        <!-- Alice -->
+        <g transform="translate(90,110)">
+          <circle r="26" fill="rgba(164,151,255,.12)" stroke="var(--alice)" stroke-width="1.5"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--alice)">A</text>
+        </g>
+        <text x="90" y="160" text-anchor="middle" class="node-sub">ALICE · sender</text>
+        <!-- Bob -->
+        <g transform="translate(770,110)">
+          <circle r="26" fill="rgba(95,166,255,.12)" stroke="var(--bob)" stroke-width="1.5"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--bob)">B</text>
+        </g>
+        <text x="770" y="160" text-anchor="middle" class="node-sub">BOB · receiver</text>
+        <!-- Trudy -->
+        <g transform="translate(430,195)">
+          <circle r="20" fill="rgba(234,92,104,.12)" stroke="var(--trudy)" stroke-width="1.5" class="pulse" style="transform-origin:430px 195px"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--trudy)" font-size="11">T</text>
+        </g>
+        <text x="430" y="230" text-anchor="middle" class="node-sub" style="display:none">TRUDY · adversary on the wire</text>
+        <text x="430" y="216" text-anchor="middle" class="node-sub">TRUDY · adversary on the wire</text>
+
+        <!-- packets -->
+        <circle r="5" fill="var(--confid)" class="packet">
+          <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+            <mpath href="#pathAB"/>
+          </animateMotion>
+        </circle>
+      </svg>
+    </div>
+
+    <div class="cast">
+      <div class="cast-card alice"><div class="cast-dot">A</div><div><div class="name">Alice</div><div class="role">Legitimate sender. Wants her message delivered privately, intact, and traceably to her.</div></div></div>
+      <div class="cast-card bob"><div class="cast-dot">B</div><div><div class="name">Bob</div><div class="role">Legitimate receiver. Needs to trust what he gets, and that the service stays up.</div></div></div>
+      <div class="cast-card trudy"><div class="cast-dot">T</div><div><div class="name">Trudy</div><div class="role">The classic textbook <em>intruder</em> — she reads, alters, blocks, or forges traffic on the wire.</div></div></div>
+    </div>
+    <p class="key-hint">↓ Scroll, or click through the sections below. Every diagram is clickable.</p>
+  </div>
+</section>
+
+<!-- ============================================================ WHAT IS SECURITY ============================================================ -->
+<section class="section" id="intro">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x01</span> Framing</div>
+    <h2><span class="hexnum"></span>What are we actually protecting?</h2>
+    <p class="lede">"Security" is not one property — it's a bundle of guarantees a system makes about information and access. Computer &amp; network security exists because Alice and Bob are not alone on the wire: Trudy is always a possible participant. Everything below defines <em>which promise</em> is broken when Trudy succeeds.</p>
+
+    <div class="recap-grid" style="grid-template-columns:repeat(3,1fr); margin-top:36px;">
+      <div class="recap-item" style="border-color:var(--confid);"><b style="color:var(--confid)">Asset</b>Anything of value: data, a session, a credential, compute, bandwidth.</div>
+      <div class="recap-item" style="border-color:var(--integ);"><b style="color:var(--integ)">Threat</b>A potential cause of an unwanted incident (e.g. Trudy on the wire).</div>
+      <div class="recap-item" style="border-color:var(--avail);"><b style="color:var(--avail)">Control</b>A safeguard that reduces risk: encryption, hashing, redundancy, policy.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CIA TRIAD ============================================================ -->
+<section class="section" id="cia">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x02</span> Core Model</div>
+    <h2>The CIA Triad</h2>
+    <p class="lede">Three vertices, three failure modes. Click a corner of the triangle — the panel on the right updates with the definition and a live Alice/Bob/Trudy scenario you can run.</p>
+
+    <div class="triad-shell">
+      <div class="triad-svg-box">
+        <svg viewBox="0 0 300 280" width="100%" height="280">
+          <path class="tri-edge" d="M150,30 L270,230 L30,230 Z"/>
+          <!-- Confidentiality vertex -->
+          <g class="vertex active" data-key="confid" transform="translate(150,30)">
+            <circle class="outer" r="30" fill="var(--confid-dim)" stroke="var(--confid)" stroke-width="2" style="color:var(--confid)"/>
+            <text y="5" text-anchor="middle" fill="var(--confid)">C</text>
+          </g>
+          <!-- Integrity vertex -->
+          <g class="vertex" data-key="integ" transform="translate(270,230)">
+            <circle class="outer" r="30" fill="var(--panel2)" stroke="var(--line)" stroke-width="2" style="color:var(--integ)"/>
+            <text y="5" text-anchor="middle" fill="var(--muted)">I</text>
+          </g>
+          <!-- Availability vertex -->
+          <g class="vertex" data-key="avail" transform="translate(30,230)">
+            <circle class="outer" r="30" fill="var(--panel2)" stroke="var(--line)" stroke-width="2" style="color:var(--avail)"/>
+            <text y="5" text-anchor="middle" fill="var(--muted)">A</text>
+          </g>
+          <text x="150" y="130" text-anchor="middle" class="node-sub" font-size="10">CIA</text>
+        </svg>
+        <p class="key-hint" style="text-align:center;">Click C / I / A above</p>
+      </div>
+
+      <div class="triad-detail" id="triadDetail">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ EXTENDED GOALS ============================================================ -->
+<section class="section" id="extended">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x03</span> Beyond CIA</div>
+    <h2>Accountability, Non-repudiation &amp; Authenticity</h2>
+    <p class="lede">CIA doesn't answer "who did this, and can they deny it?" These three properties close that gap — they're what let a security incident end in a courtroom instead of a shrug. Click a card to expand.</p>
+
+    <div class="ext-grid">
+      <div class="ext-card" data-ext="authenticity">
+        <div class="icon-row"><span class="num">01</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--integ)">Authenticity</h4>
+        <p class="short">The guarantee that data, a message, or an identity really is what/who it claims to be.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Authenticity verifies the <em>origin</em> of information — that a message from "Alice" was actually created by Alice, and a server claiming to be "bob-bank.com" really is.</p>
+          <p><b>Scenario:</b> Trudy sends Bob an email that looks like it's from Alice ("Bob, wire the funds to this account"). Without an authenticity check (e.g. a digital signature or a verified certificate), Bob has no way to know Alice never sent it.</p>
+          <p><b>Typical controls:</b> digital signatures, MACs, TLS certificates, mutual authentication.</p>
+        </div>
+      </div>
+
+      <div class="ext-card" data-ext="nonrepud">
+        <div class="icon-row"><span class="num">02</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--alice)">Non-repudiation</h4>
+        <p class="short">Alice cannot later deny she sent the message; Bob cannot deny he received it.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Provides undeniable proof of origin (and optionally receipt), so a party can't successfully disown an action after the fact.</p>
+          <p><b>Scenario:</b> Alice digitally signs a purchase order to Bob's store. Later she tries to claim "I never ordered that." Because the signature was produced with Alice's private key, Bob (and a third party / judge) can cryptographically prove otherwise.</p>
+          <div class="sig-stage">
+            <div class="sig-doc" id="sigDoc">"Alice authorizes transfer of $500 to Bob." </div>
+            <div class="sig-hash" id="sigHash">signature: (not signed yet)</div>
+            <div class="btn-row"><button class="btn" id="signBtn">Sign with Alice's private key</button><button class="btn" id="repudBtn">Alice tries to deny it</button></div>
+            <div class="scenario-caption" id="repudResult"></div>
+          </div>
+          <p style="margin-top:12px;"><b>Typical controls:</b> digital signatures + trusted timestamps, audit logs, certified delivery receipts.</p>
+        </div>
+      </div>
+
+      <div class="ext-card" data-ext="account">
+        <div class="icon-row"><span class="num">03</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--avail)">Accountability</h4>
+        <p class="short">Every action can be traced back to the entity that performed it.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Accountability = identification + logging + auditing, tying actions to accounts so misuse can be investigated after the fact.</p>
+          <p><b>Scenario:</b> Trudy compromises a low-privilege account and deletes a file. Because the system logged <code>who / what / when / from where</code> for every action, the audit trail lets the security team reconstruct exactly what Trudy did — even though she was never caught in the act.</p>
+          <p><b>Typical controls:</b> audit logging, SIEM, unique user IDs (no shared logins), tamper-evident logs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ AAA ============================================================ -->
+<section class="section" id="aaa">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x04</span> Access Control Model</div>
+    <h2>Authentication → Authorization → Accounting (AAA)</h2>
+    <p class="lede">Before Bob's system trusts anything Alice does, it runs her through this pipeline. Click each stage to see what question it answers and to step through a live login console.</p>
+
+    <div class="aaa-pipeline" id="aaaPipeline">
+      <div class="aaa-step active" data-step="1">
+        <div class="step-idx">STEP 1</div>
+        <h4 style="color:var(--confid)">Identification</h4>
+        <p>Alice claims an identity: "I am alice@corp".</p>
+        <div class="q">Q: who are you claiming to be?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="2">
+        <div class="step-idx">STEP 2</div>
+        <h4 style="color:var(--integ)">Authentication</h4>
+        <p>Alice proves it — password, OTP token, fingerprint (something you know / have / are).</p>
+        <div class="q">Q: can you prove that?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="3">
+        <div class="step-idx">STEP 3</div>
+        <h4 style="color:var(--avail)">Authorization</h4>
+        <p>The system checks Alice's permissions against the resource she's requesting.</p>
+        <div class="q">Q: are you allowed to do this?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="4">
+        <div class="step-idx">STEP 4</div>
+        <h4 style="color:var(--alice)">Accounting</h4>
+        <p>The action, timestamp, and outcome are logged — feeding Accountability.</p>
+        <div class="q">Q: what did you just do?</div>
+      </div>
+    </div>
+
+    <div class="aaa-console" id="aaaConsole"></div>
+    <div class="btn-row">
+      <button class="btn" id="runAliceBtn">▶ Run as Alice (valid credentials)</button>
+      <button class="btn" id="runTrudyBtn">▶ Run as Trudy (stolen password, wrong role)</button>
+    </div>
+
+    <p style="margin-top:26px; font-size:14px; color:var(--muted); max-width:680px;">
+    Note the distinction: <b style="color:var(--integ)">authentication</b> asks "who are you, prove it," while
+    <b style="color:var(--avail)">authorization</b> asks "now that I know who you are, what are you allowed to touch."
+    Trudy can pass step 2 (e.g. with a stolen password) and still fail step 3 if she lacks the right role.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ IAM ============================================================ -->
+<section class="section" id="iam">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x05</span> Operational Framework</div>
+    <h2>Identity &amp; Access Management (IAM)</h2>
+    <p class="lede">IAM is the organizational system — policies, processes, and tooling — that makes AAA work at scale across an entire company, not just one login. It governs Alice's entire lifecycle as a digital identity. Click a stage on the ring.</p>
+
+    <div class="iam-wheel">
+      <div class="iam-ring">
+        <svg viewBox="0 0 260 260" width="260" height="260" id="iamSvg">
+          <circle cx="130" cy="130" r="100" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 5"/>
+          <!-- nodes placed around circle: 5 stages -->
+        </svg>
+      </div>
+      <div class="iam-panel" id="iamPanel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ COMPARISON TABLE ============================================================ -->
+<section class="section" id="summary">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x06</span> Reference</div>
+    <h2>Concept Map — one table, everything above</h2>
+    <p class="lede">Use this as your revision sheet. "Broken by" names the classic attack; "Typical control" names the classic defense.</p>
+    <table>
+      <thead><tr><th>Property</th><th>Answers</th><th>Broken by (Trudy)</th><th>Typical control</th></tr></thead>
+      <tbody>
+        <tr><td><span class="dot" style="background:var(--confid)"></span><b>Confidentiality</b></td><td>Who can read this?</td><td>Eavesdropping / sniffing</td><td>Encryption, access control</td></tr>
+        <tr><td><span class="dot" style="background:var(--integ)"></span><b>Integrity</b></td><td>Was this altered?</td><td>Tampering / injection</td><td>Hashing, MACs, digital signatures</td></tr>
+        <tr><td><span class="dot" style="background:var(--avail)"></span><b>Availability</b></td><td>Can I get to it when I need it?</td><td>DoS / DDoS, sabotage</td><td>Redundancy, rate-limiting, backups</td></tr>
+        <tr><td><span class="dot" style="background:var(--integ)"></span><b>Authenticity</b></td><td>Is this really from who it claims?</td><td>Spoofing / impersonation</td><td>Signatures, certificates, MFA</td></tr>
+        <tr><td><span class="dot" style="background:var(--alice)"></span><b>Non-repudiation</b></td><td>Can they deny doing this?</td><td>Denial after the fact</td><td>Signed + timestamped records</td></tr>
+        <tr><td><span class="dot" style="background:var(--avail)"></span><b>Accountability</b></td><td>Who did what, and when?</td><td>Anonymous / shared accounts</td><td>Unique IDs, audit logging</td></tr>
+        <tr><td><span class="dot" style="background:var(--confid)"></span><b>Authentication</b></td><td>Are you who you claim?</td><td>Credential theft, phishing</td><td>Passwords + MFA, biometrics</td></tr>
+        <tr><td><span class="dot" style="background:var(--bob)"></span><b>Authorization</b></td><td>What are you allowed to do?</td><td>Privilege escalation</td><td>RBAC, least privilege, ACLs</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ QUIZ ============================================================ -->
+<section class="section" id="quiz">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x07</span> Knowledge Check</div>
+    <h2>Quick self-test</h2>
+    <p class="lede">Four scenarios. Pick the property each one violates or demonstrates.</p>
+
+    <div class="quiz-card" id="quizCard"></div>
+  </div>
+</section>
+
+<!-- ============================================================ RECAP ============================================================ -->
+<section class="section" id="recap">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x08</span> Recap</div>
+    <h2>Take this away</h2>
+    <div class="recap-grid">
+      <div class="recap-item"><b>CIA</b>Confidentiality, Integrity, Availability — the three base guarantees.</div>
+      <div class="recap-item"><b>AAA</b>Authentication → Authorization → Accounting — how access is actually controlled.</div>
+      <div class="recap-item"><b>+ 3 more</b>Authenticity, Non-repudiation, Accountability — close the "who / can-they-deny-it" gap.</div>
+      <div class="recap-item"><b>IAM</b>The organizational machine that runs AAA + accountability at scale.</div>
+      <div class="recap-item"><b>Alice &amp; Bob</b>Legitimate parties whose guarantees we're trying to protect.</div>
+      <div class="recap-item"><b>Trudy</b>The generic adversary — every control above exists because of her.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  DS 5105 · Information Security — Module 01 · Basic Security Concepts<br>
+  Built as an interactive lecture note. Reduced-motion friendly.
+</footer>
+
+<script>
+/* ---------------- progress bar ---------------- */
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement;
+  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+/* ---------------- hero clock ---------------- */
+let t=0;
+setInterval(()=>{ t += 1; document.getElementById('clockLabel').textContent = 't = ' + (t%10) + 's'; }, 1000);
+
+/* ================= CIA TRIAD ================= */
+const triadData = {
+  confid:{
+    color:'var(--confid)', title:'Confidentiality',
+    def:'Information is disclosed only to those authorized to see it. Confidentiality fails the moment an unauthorized party reads data — even if nothing is changed or blocked.',
+    pills:['Encryption','Access control','Need-to-know'],
+    scenario:'encrypt'
+  },
+  integ:{
+    color:'var(--integ)', title:'Integrity',
+    def:'Information is accurate, complete, and unmodified except by authorized action. Integrity fails when data is altered — in transit, at rest, or in processing — without detection.',
+    pills:['Hashing','Checksums','Digital signatures','Version control'],
+    scenario:'tamper'
+  },
+  avail:{
+    color:'var(--avail)', title:'Availability',
+    def:'Authorized users can access information and systems whenever they legitimately need to. Availability fails when a service is knocked offline or made too slow to use.',
+    pills:['Redundancy','Backups','Rate limiting','DDoS mitigation'],
+    scenario:'dos'
+  }
+};
+
+function scenarioHTML(key){
+  if(key==='encrypt'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Confidentiality</div>
+      <div class="scenario-anim">
+        <svg viewBox="0 0 500 90" width="100%" height="90">
+          <text x="10" y="20" class="node-sub" fill="var(--alice)">ALICE</text>
+          <text x="440" y="20" class="node-sub" fill="var(--bob)">BOB</text>
+          <text x="220" y="80" class="node-sub" fill="var(--trudy)">TRUDY (sniffing)</text>
+          <line x1="20" y1="45" x2="470" y2="45" class="wire"/>
+          <rect id="pktBox" x="20" y="34" width="140" height="22" rx="4" fill="var(--panel3)" stroke="var(--confid)"/>
+          <text id="pktText" x="90" y="49" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--confid)">HELLO BOB</text>
+        </svg>
+      </div>
+      <div class="switch-row">
+        <div class="switch" id="encSwitch"><div class="knob"></div></div>
+        <span id="encLabel">Encryption: OFF — Trudy can read the message</span>
+      </div>
+      <div class="btn-row"><button class="btn" id="sendBtn">Send packet →</button></div>
+      <div class="scenario-caption" id="encCaption"></div>
+    </div>`;
+  }
+  if(key==='tamper'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Integrity</div>
+      <div class="scenario-anim">
+        <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">Original message (Alice → Bob):</div>
+        <div id="origMsg" style="font-family:var(--mono); font-size:13px; margin-top:6px; color:var(--text);">"Pay Bob $50"</div>
+        <div style="font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:14px;">Received by Bob:</div>
+        <div id="recvMsg" style="font-family:var(--mono); font-size:13px; margin-top:6px; color:var(--text);">"Pay Bob $50"</div>
+        <div id="integStatus" style="font-family:var(--mono); font-size:12px; margin-top:12px; color:var(--avail);">✓ Hash matches — integrity intact</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="tamperBtn">Trudy tampers the message</button>
+        <button class="btn" id="hashCheckBtn">Run integrity check (hash)</button>
+        <button class="btn" id="resetTamperBtn">Reset</button>
+      </div>
+    </div>`;
+  }
+  if(key==='dos'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Availability</div>
+      <div class="scenario-anim">
+        <svg viewBox="0 0 500 120" width="100%" height="120">
+          <rect x="220" y="35" width="60" height="50" rx="6" id="serverBox" fill="var(--panel3)" stroke="var(--avail)" stroke-width="2"/>
+          <text x="250" y="65" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--avail)" id="serverText">UP</text>
+          <text x="250" y="105" text-anchor="middle" class="node-sub">BOB'S SERVER</text>
+          <text x="30" y="20" class="node-sub" fill="var(--alice)">Legit users</text>
+          <text x="400" y="20" class="node-sub" fill="var(--trudy)">Trudy's flood</text>
+          <g id="floodGroup"></g>
+        </svg>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="floodBtn">Trudy launches flood (DoS)</button>
+        <button class="btn" id="mitigateBtn">Bob enables rate-limiting</button>
+        <button class="btn" id="resetFloodBtn">Reset</button>
+      </div>
+      <div class="scenario-caption" id="floodCaption">Server is healthy. Legitimate requests get through instantly.</div>
+    </div>`;
+  }
+}
+
+function renderTriad(key){
+  const d = triadData[key];
+  document.getElementById('triadDetail').innerHTML = `
+    <div class="kicker" style="color:${d.color}">${key.toUpperCase()}</div>
+    <h3>${d.title}</h3>
+    <p class="def">${d.def}</p>
+    <div class="pill-row">${d.pills.map(p=>`<span class="pill">${p}</span>`).join('')}</div>
+    ${scenarioHTML(d.scenario)}
+  `;
+  wireScenario(d.scenario);
+}
+
+document.querySelectorAll('.vertex').forEach(v=>{
+  v.addEventListener('click', ()=>{
+    document.querySelectorAll('.vertex').forEach(x=>{
+      x.classList.remove('active');
+      x.querySelector('circle').setAttribute('fill','var(--panel2)');
+      x.querySelector('circle').setAttribute('stroke','var(--line)');
+      x.querySelector('text').setAttribute('fill','var(--muted)');
+    });
+    v.classList.add('active');
+    const key = v.dataset.key;
+    const col = key==='confid' ? 'var(--confid)' : key==='integ' ? 'var(--integ)' : 'var(--avail)';
+    const dimcol = key==='confid' ? 'var(--confid-dim)' : key==='integ' ? 'var(--integ-dim)' : 'var(--avail-dim)';
+    v.querySelector('circle').setAttribute('fill',dimcol);
+    v.querySelector('circle').setAttribute('stroke',col);
+    v.querySelector('text').setAttribute('fill',col);
+    renderTriad(key);
+  });
+});
+renderTriad('confid');
+
+function wireScenario(kind){
+  if(kind==='encrypt'){
+    let encrypted=false;
+    const sw = document.getElementById('encSwitch');
+    sw.addEventListener('click', ()=>{
+      encrypted = !encrypted;
+      sw.classList.toggle('on', encrypted);
+      document.getElementById('encLabel').textContent = encrypted
+        ? 'Encryption: ON — Trudy only sees ciphertext'
+        : 'Encryption: OFF — Trudy can read the message';
+    });
+    document.getElementById('sendBtn').addEventListener('click', ()=>{
+      const box = document.getElementById('pktBox');
+      const txt = document.getElementById('pktText');
+      const cap = document.getElementById('encCaption');
+      txt.textContent = encrypted ? '#8f3a$2kd91@' : 'HELLO BOB';
+      box.setAttribute('stroke', encrypted ? 'var(--avail)' : 'var(--trudy)');
+      box.animate([{transform:'translateX(0px)'},{transform:'translateX(300px)'}],{duration:1400, easing:'ease-in-out'});
+      txt.animate([{transform:'translateX(0px)'},{transform:'translateX(300px)'}],{duration:1400, easing:'ease-in-out'});
+      setTimeout(()=>{
+        cap.innerHTML = encrypted
+          ? '<span style="color:var(--avail)">✓ Trudy intercepts the packet but only recovers ciphertext. Confidentiality preserved.</span>'
+          : '<span style="color:var(--trudy)">✗ Trudy intercepts the packet and reads "HELLO BOB" in plaintext. Confidentiality broken.</span>';
+      },1450);
+    });
+  }
+  if(kind==='tamper'){
+    document.getElementById('tamperBtn').addEventListener('click', ()=>{
+      document.getElementById('recvMsg').textContent = '"Pay Trudy $5000"';
+      document.getElementById('recvMsg').style.color = 'var(--trudy)';
+      document.getElementById('integStatus').textContent = '? unknown — run the integrity check';
+      document.getElementById('integStatus').style.color = 'var(--muted)';
+    });
+    document.getElementById('hashCheckBtn').addEventListener('click', ()=>{
+      const recv = document.getElementById('recvMsg').textContent;
+      const status = document.getElementById('integStatus');
+      if(recv.includes('Trudy')){
+        status.innerHTML = '✗ Hash mismatch: expected <code>a1f9…</code>, got <code>7bc2…</code> — integrity broken, message rejected.';
+        status.style.color = 'var(--trudy)';
+      } else {
+        status.innerHTML = '✓ Hash matches — integrity intact';
+        status.style.color = 'var(--avail)';
+      }
+    });
+    document.getElementById('resetTamperBtn').addEventListener('click', ()=>{
+      document.getElementById('recvMsg').textContent = '"Pay Bob $50"';
+      document.getElementById('recvMsg').style.color = 'var(--text)';
+      document.getElementById('integStatus').innerHTML = '✓ Hash matches — integrity intact';
+      document.getElementById('integStatus').style.color = 'var(--avail)';
+    });
+  }
+  if(kind==='dos'){
+    let floodTimer=null;
+    const group = document.getElementById('floodGroup');
+    document.getElementById('floodBtn').addEventListener('click', ()=>{
+      document.getElementById('floodCaption').innerHTML = '<span style="color:var(--trudy)">Flood in progress — legitimate requests start timing out.</span>';
+      let i=0;
+      floodTimer = setInterval(()=>{
+        i++;
+        const y = 20 + (i%5)*18;
+        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('cx','400'); c.setAttribute('cy', y); c.setAttribute('r','4');
+        c.setAttribute('fill','var(--trudy)');
+        group.appendChild(c);
+        c.animate([{transform:'translateX(0px)', opacity:1},{transform:'translateX(-150px)', opacity:0.2}],{duration:900, easing:'linear'});
+        setTimeout(()=>c.remove(),900);
+        if(i>6){
+          document.getElementById('serverBox').setAttribute('stroke','var(--trudy)');
+          document.getElementById('serverText').textContent='DOWN';
+          document.getElementById('serverText').setAttribute('fill','var(--trudy)');
+        }
+      }, 220);
+    });
+    document.getElementById('mitigateBtn').addEventListener('click', ()=>{
+      if(floodTimer) clearInterval(floodTimer);
+      document.getElementById('serverBox').setAttribute('stroke','var(--avail)');
+      document.getElementById('serverText').textContent='UP';
+      document.getElementById('serverText').setAttribute('fill','var(--avail)');
+      document.getElementById('floodCaption').innerHTML = '<span style="color:var(--avail)">Rate-limiting + filtering drop Trudy\\'s flood at the edge. Legit traffic flows again.</span>';
+    });
+    document.getElementById('resetFloodBtn').addEventListener('click', ()=>{
+      if(floodTimer) clearInterval(floodTimer);
+      group.innerHTML='';
+      document.getElementById('serverBox').setAttribute('stroke','var(--avail)');
+      document.getElementById('serverText').textContent='UP';
+      document.getElementById('serverText').setAttribute('fill','var(--avail)');
+      document.getElementById('floodCaption').textContent = 'Server is healthy. Legitimate requests get through instantly.';
+    });
+  }
+}
+
+/* ================= EXTENDED CARDS ================= */
+document.querySelectorAll('.ext-card').forEach(c=>{
+  c.addEventListener('click', (e)=>{
+    c.classList.toggle('open');
+  });
+});
+document.getElementById('signBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('sigHash').innerHTML = 'signature: <span style="color:var(--avail)">3f9a...e12c ✓ signed with Alice\\'s private key</span>';
+});
+document.getElementById('repudBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const hash = document.getElementById('sigHash').textContent;
+  const result = document.getElementById('repudResult');
+  if(hash.includes('signed')){
+    result.innerHTML = '<span style="color:var(--avail)">Bob verifies the signature with Alice\\'s public key — it matches. Alice cannot deny sending it. Non-repudiation holds.</span>';
+  } else {
+    result.innerHTML = '<span style="color:var(--trudy)">The message was never signed — Alice can plausibly deny sending it. Sign it first!</span>';
+  }
+});
+
+/* ================= AAA ================= */
+const consoleEl = document.getElementById('aaaConsole');
+function printConsole(lines){
+  consoleEl.innerHTML='';
+  lines.forEach((l,i)=>{
+    const div = document.createElement('div');
+    div.className = 'line ' + (l.cls||'');
+    div.style.animationDelay = (i*0.28)+'s';
+    div.textContent = l.text;
+    consoleEl.appendChild(div);
+  });
+}
+printConsole([{text:'$ awaiting login attempt...', cls:'sys'}]);
+
+document.querySelectorAll('.aaa-step').forEach(s=>{
+  s.addEventListener('click', ()=>{
+    document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active');
+  });
+});
+
+document.getElementById('runAliceBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+  printConsole([
+    {text:'[1] IDENTIFY   > user claims identity: alice@corp', cls:'sys'},
+    {text:'[2] AUTHENTICATE > password + OTP verified', cls:'ok'},
+    {text:'[3] AUTHORIZE  > role=FINANCE_ANALYST, resource=payroll:read → ALLOWED', cls:'ok'},
+    {text:'[4] ACCOUNT    > logged: alice@corp read payroll @ 09:14:02, src=10.2.1.4', cls:'sys'},
+    {text:'✓ session granted', cls:'ok'}
+  ]);
+  document.querySelectorAll('.aaa-step').forEach((el,i)=>setTimeout(()=>el.classList.add('active'), i*280));
+});
+document.getElementById('runTrudyBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+  printConsole([
+    {text:'[1] IDENTIFY   > user claims identity: alice@corp', cls:'sys'},
+    {text:'[2] AUTHENTICATE > stolen password accepted (!) — MFA challenge sent', cls:'warn'},
+    {text:'[2] AUTHENTICATE > OTP not provided — FAILED', cls:'deny'},
+    {text:'✗ access denied — session not established', cls:'deny'},
+    {text:'[4] ACCOUNT    > logged: FAILED login for alice@corp, src=185.44.x.x (flagged)', cls:'warn'}
+  ]);
+  setTimeout(()=>document.querySelector('.aaa-step[data-step="1"]').classList.add('active'),0);
+  setTimeout(()=>document.querySelector('.aaa-step[data-step="2"]').classList.add('active'),280);
+});
+
+/* ================= IAM RING ================= */
+const iamStages = [
+  {key:'identify', label:'Identify', title:'1 · Identification', angle:-90,
+   text:'HR/IT creates a unique digital identity for Alice — one account, never shared, tied to her as a person.'},
+  {key:'provision', label:'Provision', title:'2 · Provisioning', angle:-18,
+   text:'Access is granted based on her role (e.g. "Finance Analyst") — usually automatically, following least-privilege.'},
+  {key:'authn', label:'Authenticate', title:'3 · Authentication', angle:54,
+   text:'Every session, Alice proves her identity again — password + MFA — before anything else happens.'},
+  {key:'authz', label:'Authorize', title:'4 · Authorization', angle:126,
+   text:'Each request Alice makes is checked against her permissions (RBAC/ABAC policies) in real time.'},
+  {key:'monitor', label:'Monitor', title:'5 · Monitor & Audit', angle:198,
+   text:'All access is logged for accountability; anomalies (e.g. Trudy using Alice\\'s stolen token from a new country) trigger alerts.'},
+  {key:'deprov', label:'Deprovision', title:'6 · Deprovisioning', angle:270,
+   text:'When Alice leaves the company, every credential and permission is revoked immediately — closing the loop.'}
+];
+const iamSvg = document.getElementById('iamSvg');
+const cx=130, cy=130, r=100;
+iamStages.forEach((s)=>{
+  const rad = s.angle * Math.PI/180;
+  const x = cx + r*Math.cos(rad);
+  const y = cy + r*Math.sin(rad);
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('class','iam-node');
+  g.setAttribute('data-key', s.key);
+  g.setAttribute('transform', `translate(${x},${y})`);
+  g.innerHTML = `<circle r="16" fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"/>
+                 <text y="4" text-anchor="middle">${s.label.slice(0,2).toUpperCase()}</text>`;
+  g.addEventListener('click', ()=>selectIam(s.key));
+  iamSvg.appendChild(g);
+
+  // connecting line to next node (hexagon path)
+});
+// draw hexagon edges
+let hexPath = 'M ';
+iamStages.forEach((s,i)=>{
+  const rad = s.angle*Math.PI/180;
+  const x = cx+r*Math.cos(rad); const y = cy+r*Math.sin(rad);
+  hexPath += `${x},${y} ${i<iamStages.length-1?'L':'Z'} `;
+});
+const hexEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+hexEl.setAttribute('d', hexPath);
+hexEl.setAttribute('fill','none');
+hexEl.setAttribute('stroke','var(--line)');
+hexEl.setAttribute('stroke-width','1');
+iamSvg.insertBefore(hexEl, iamSvg.firstChild.nextSibling);
+
+function selectIam(key){
+  const s = iamStages.find(x=>x.key===key);
+  document.querySelectorAll('.iam-node').forEach(n=>{
+    n.classList.toggle('active', n.dataset.key===key);
+    n.querySelector('circle').setAttribute('stroke', n.dataset.key===key ? 'var(--confid)' : 'var(--line)');
+    n.querySelector('circle').setAttribute('fill', n.dataset.key===key ? 'var(--confid-dim)' : 'var(--panel2)');
+  });
+  document.getElementById('iamPanel').innerHTML = `
+    <div class="kicker">IAM LIFECYCLE</div>
+    <h4>${s.title}</h4>
+    <p>${s.text}</p>`;
+}
+selectIam('identify');
+
+/* ================= QUIZ ================= */
+const quizData = [
+  {q:'Trudy floods Bob\\'s web server with junk requests until real customers can\\'t load the page. Which property is attacked?',
+   opts:['Confidentiality','Integrity','Availability','Non-repudiation'], correct:2,
+   explain:'Correct — the service is still confidential and unaltered, it\\'s just unreachable. That\\'s an availability attack (DoS).'},
+  {q:'Trudy intercepts Alice\\'s email and changes the bank account number before forwarding it to Bob. Which property is attacked?',
+   opts:['Availability','Integrity','Accountability','Authentication'], correct:1,
+   explain:'Correct — the content was altered in transit without authorization. That\\'s an integrity violation.'},
+  {q:'Trudy reads Alice\\'s unencrypted chat messages by sniffing the WiFi network. Which property is attacked?',
+   opts:['Confidentiality','Availability','Non-repudiation','Authorization'], correct:0,
+   explain:'Correct — unauthorized disclosure of information is a confidentiality breach.'},
+  {q:'Alice digitally signs a contract, so she can\\'t later claim she never agreed to it. Which property does this provide?',
+   opts:['Authorization','Availability','Non-repudiation','Confidentiality'], correct:2,
+   explain:'Correct — a verifiable, undeniable link between Alice and the action is exactly non-repudiation.'}
+];
+let quizScore=0, answered=0;
+const quizCard = document.getElementById('quizCard');
+quizData.forEach((q,qi)=>{
+  const block = document.createElement('div');
+  block.className='quiz-q';
+  block.innerHTML = `<div class="qtext">${qi+1}. ${q.q}</div>
+    <div class="quiz-opts">${q.opts.map((o,oi)=>`<div class="quiz-opt" data-qi="${qi}" data-oi="${oi}">${o}</div>`).join('')}</div>
+    <div class="quiz-feedback" id="fb-${qi}"></div>`;
+  quizCard.appendChild(block);
+});
+const scoreEl = document.createElement('div');
+scoreEl.className='quiz-score';
+scoreEl.id='quizScore';
+scoreEl.textContent = 'Score: 0 / ' + quizData.length;
+quizCard.appendChild(scoreEl);
+
+quizCard.addEventListener('click',(e)=>{
+  const opt = e.target.closest('.quiz-opt');
+  if(!opt) return;
+  const qi = +opt.dataset.qi, oi = +opt.dataset.oi;
+  const group = quizCard.querySelectorAll(`.quiz-opt[data-qi="${qi}"]`);
+  if(group[0].classList.contains('disabled')) return;
+  group.forEach(g=>g.classList.add('disabled'));
+  const q = quizData[qi];
+  group.forEach((g,i)=>{
+    if(i===q.correct) g.classList.add('correct');
+    else if(i===oi) g.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb-'+qi);
+  if(oi===q.correct){
+    quizScore++;
+    fb.innerHTML = '<span style="color:var(--avail)">✓ ' + q.explain + '</span>';
+  } else {
+    fb.innerHTML = '<span style="color:var(--trudy)">✗ ' + q.explain + '</span>';
+  }
+  answered++;
+  document.getElementById('quizScore').textContent = 'Score: ' + quizScore + ' / ' + quizData.length + (answered===quizData.length ? '  — complete' : '');
+});
+</script>
+
+</body>
+</html>
