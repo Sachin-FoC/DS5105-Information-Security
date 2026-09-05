@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DS5105 · Information Security — Networking Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1220;
+    --surface:#121A2E;
+    --surface-2:#182544;
+    --border:#28365A;
+    --text:#E8EDF7;
+    --text-muted:#93A4C3;
+    --teal:#45D6C0;
+    --teal-dim: rgba(69,214,192,0.12);
+    --amber:#F0A94E;
+    --amber-dim: rgba(240,169,78,0.12);
+    --lilac:#9C8CF5;
+    --lilac-dim: rgba(156,140,245,0.12);
+    --red:#EF6F7B;
+    --red-dim: rgba(239,111,123,0.12);
+    --radius:10px;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--teal); color:#0B1220; }
+  h1,h2,h3,h4{ font-family:'Space Grotesk',sans-serif; font-weight:600; line-height:1.2; margin:0 0 .5em 0; color:var(--text); }
+  p{ margin:0 0 1em 0; color:var(--text); max-width:68ch; }
+  a{ color:var(--teal); }
+  code, .mono{ font-family:'JetBrains Mono', monospace; }
+  .muted{ color:var(--text-muted); }
+
+  /* ---------- Layout shell ---------- */
+  .shell{ display:flex; max-width:1180px; margin:0 auto; align-items:flex-start; }
+  nav.toc{
+    position:sticky; top:0; height:100vh; width:250px; flex:0 0 250px;
+    padding:32px 18px 32px 28px; overflow-y:auto; border-right:1px solid var(--border);
+  }
+  nav.toc .brand{ font-family:'Space Grotesk'; font-weight:700; font-size:15px; letter-spacing:.2px; margin-bottom:2px; }
+  nav.toc .brand-sub{ font-size:12.5px; color:var(--text-muted); margin-bottom:28px; display:block; }
+  nav.toc ol{ list-style:none; margin:0; padding:0; counter-reset:sec; }
+  nav.toc li{ counter-increment:sec; margin-bottom:2px; }
+  nav.toc a{
+    display:flex; gap:10px; align-items:baseline; text-decoration:none; color:var(--text-muted);
+    font-size:13.5px; padding:7px 8px; border-radius:7px; transition:background .15s, color .15s;
+  }
+  nav.toc a::before{
+    content: counter(sec, decimal-leading-zero); font-family:'JetBrains Mono'; font-size:11px;
+    color:var(--text-muted); flex:0 0 auto;
+  }
+  nav.toc a:hover{ background:var(--surface); color:var(--text); }
+  nav.toc a.active{ background:var(--surface-2); color:var(--teal); }
+  nav.toc a.active::before{ color:var(--teal); }
+
+  main{ flex:1 1 auto; min-width:0; padding:56px 48px 120px 48px; }
+  .content{ max-width:var(--maxw); }
+
+  section{ padding-top:26px; margin-top:26px; scroll-margin-top:24px; }
+  section + section{ border-top:1px solid var(--border); }
+
+  .eyebrow{ font-size:12.5px; color:var(--text-muted); font-family:'JetBrains Mono'; margin-bottom:10px; }
+  h2.section-title{ font-size:26px; margin-bottom:14px; }
+  h3{ font-size:19px; margin-top:1.6em; }
+
+  .callout{
+    border:1px solid var(--border); border-left:3px solid var(--teal);
+    background:var(--surface); border-radius:8px; padding:14px 16px; margin:18px 0;
+  }
+  .callout.security{ border-left-color:var(--red); background:var(--red-dim); }
+  .callout.security .callout-head{ color:var(--red); }
+  .callout-head{ font-family:'Space Grotesk'; font-weight:600; font-size:13.5px; color:var(--teal); margin-bottom:4px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:14.5px; margin:14px 0 22px 0; }
+  th,td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th{ font-family:'Space Grotesk'; font-weight:600; color:var(--text-muted); font-size:12.5px; }
+  tr:hover td{ background:var(--surface); }
+  .port{ font-family:'JetBrains Mono'; color:var(--amber); }
+
+  /* ---------- Hero ---------- */
+  .hero{ padding:60px 48px 20px 48px; max-width:var(--maxw); }
+  .hero .module-tag{
+    display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono'; font-size:12.5px;
+    color:var(--teal); background:var(--teal-dim); border:1px solid rgba(69,214,192,0.35);
+    padding:5px 10px; border-radius:20px; margin-bottom:22px; opacity:0; animation:fadeUp .6s ease forwards;
+  }
+  .hero h1{ font-size:38px; letter-spacing:-.01em; opacity:0; animation:fadeUp .7s ease .1s forwards; }
+  .hero p.lede{ font-size:17px; color:var(--text-muted); opacity:0; animation:fadeUp .7s ease .22s forwards; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .hero-strip{
+    margin-top:30px; height:64px; border:1px solid var(--border); border-radius:12px; background:var(--surface);
+    position:relative; overflow:hidden; opacity:0; animation:fadeUp .7s ease .34s forwards;
+  }
+  .hero-strip .hs-track{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; padding:0 22px; }
+  .hero-strip .hs-node{ font-size:20px; opacity:.55; }
+  .hero-strip .hs-line{ position:absolute; top:50%; left:22px; right:22px; height:1px; background:var(--border); transform:translateY(-50%); }
+  .hero-strip .hs-packet{
+    position:absolute; top:50%; width:14px; height:14px; margin-top:-7px; margin-left:-7px;
+    background:var(--teal); border-radius:3px; box-shadow:0 0 12px 2px rgba(69,214,192,.6);
+    animation: heroTravel 4.5s linear infinite;
+  }
+  @keyframes heroTravel{
+    0%{ left:2%; } 45%{ left:98%; } 50%{ left:98%; } 95%{ left:2%; } 100%{ left:2%; }
+  }
+
+  /* ---------- Stepper shell (shared) ---------- */
+  .stepper{ border:1px solid var(--border); background:var(--surface); border-radius:14px; padding:22px; margin:22px 0 28px 0; }
+  .stepper-stage{ position:relative; min-height:170px; display:flex; align-items:center; justify-content:center; }
+  .stepper-controls{ display:flex; align-items:center; justify-content:space-between; margin-top:18px; gap:14px; }
+  .step-btn{
+    font-family:'Space Grotesk'; font-weight:600; font-size:13px; color:var(--text);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 16px;
+    cursor:pointer; transition:background .15s, border-color .15s, opacity .15s;
+  }
+  .step-btn:hover:not(:disabled){ border-color:var(--teal); }
+  .step-btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .step-dots{ display:flex; gap:7px; }
+  .dot{ width:8px; height:8px; border-radius:50%; border:none; background:var(--border); cursor:pointer; padding:0; }
+  .dot.active{ background:var(--teal); }
+  .step-caption{
+    font-size:13.5px; color:var(--text-muted); text-align:center; margin-top:14px; min-height:20px;
+    font-family:'JetBrains Mono';
+  }
+
+  /* ---------- Encapsulation rings ---------- */
+  .encap-visual{ display:flex; align-items:center; justify-content:center; width:100%; padding:20px 0; }
+  .ring{
+    border-radius:16px; border:2px solid transparent; padding:0; transition:padding .5s ease, border-color .5s ease, background-color .5s ease;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .ring.visible{ padding:20px; }
+  .ring-frame.visible{ border-color:#5B6B96; background:rgba(91,107,150,.08); }
+  .ring-ip.visible{ border-color:var(--lilac); background:var(--lilac-dim); }
+  .ring-tcp.visible{ border-color:var(--amber); background:var(--amber-dim); }
+  .ring-data{ border-color:var(--teal); background:var(--teal-dim); padding:18px 26px; }
+  .ring-label{
+    font-family:'JetBrains Mono'; font-size:11px; color:var(--text-muted); opacity:0; transition:opacity .4s ease .2s;
+    margin-bottom:8px; text-align:center;
+  }
+  .ring.visible .ring-label, .ring-data .ring-label{ opacity:1; }
+  .ring-data-label{ font-family:'Space Grotesk'; font-weight:600; font-size:13px; color:var(--text); }
+
+  /* ---------- Two-box arrow flip (client-server) ---------- */
+  .cs-stage{ display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 6px; }
+  .cs-box{
+    flex:0 0 130px; height:90px; border:1px solid var(--border); background:var(--surface-2); border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; transition:border-color .3s, box-shadow .3s;
+  }
+  .cs-box .icon{ font-size:26px; }
+  .cs-box .lbl{ font-family:'Space Grotesk'; font-weight:600; font-size:13px; }
+  .cs-box.active{ border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-dim); }
+  .cs-arrow-track{ flex:1; position:relative; height:2px; background:var(--border); margin:0 14px; }
+  .cs-arrow{
+    position:absolute; top:50%; width:22px; height:22px; margin-top:-11px; display:flex; align-items:center; justify-content:center;
+    font-size:15px; color:var(--bg); background:var(--teal); border-radius:50%; transition:left .55s cubic-bezier(.65,0,.35,1), transform .3s;
+    box-shadow:0 0 10px 2px rgba(69,214,192,.5); opacity:0;
+  }
+  .cs-arrow.show{ opacity:1; }
+
+  /* ---------- Packet journey path ---------- */
+  .path-diagram{ width:100%; padding:26px 4px 6px 4px; }
+  .path-track{ position:relative; height:60px; margin:0 10px; }
+  .path-line{ position:absolute; top:50%; left:0; right:0; height:2px; background:var(--border); transform:translateY(-50%); }
+  .path-node{ position:absolute; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .path-node .n-icon{
+    width:38px; height:38px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:17px; transition:border-color .3s, box-shadow .3s;
+  }
+  .path-node .n-label{ font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono'; white-space:nowrap; }
+  .path-node.active .n-icon{ border-color:var(--teal); box-shadow:0 0 0 4px var(--teal-dim); }
+  .packet-dot{
+    position:absolute; top:50%; width:16px; height:16px; margin-top:-8px; margin-left:-8px;
+    background:var(--teal); border-radius:4px; box-shadow:0 0 10px 2px rgba(69,214,192,.6);
+    transition:left .6s cubic-bezier(.65,0,.35,1), background-color .3s; z-index:2;
+  }
+  .packet-dot.reply{ background:var(--amber); box-shadow:0 0 10px 2px rgba(240,169,78,.55); }
+
+  /* ---------- Bubble conversation stepper ---------- */
+  .bubble-stage{ display:flex; flex-direction:column; gap:12px; width:100%; padding:6px 2px; min-height:auto; align-items:stretch; }
+  .bubble{
+    max-width:78%; padding:11px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2);
+    font-size:14px; opacity:0; transform:translateY(8px); transition:opacity .4s ease, transform .4s ease; visibility:hidden; height:0; overflow:hidden; padding-top:0; padding-bottom:0; margin:0; border-width:0;
+  }
+  .bubble .b-tag{ font-family:'JetBrains Mono'; font-size:10.5px; color:var(--teal); display:block; margin-bottom:4px; }
+  .bubble.left{ align-self:flex-start; border-bottom-left-radius:3px; }
+  .bubble.right{ align-self:flex-end; border-bottom-right-radius:3px; background:var(--teal-dim); }
+  .bubble.right .b-tag{ color:var(--amber); }
+  .bubble.visible{
+    opacity:1; transform:translateY(0); visibility:visible; height:auto; padding:11px 14px; border-width:1px; margin-bottom:0;
+  }
+
+  /* ---------- TCP/IP layer cards ---------- */
+  .layer-cards{ display:flex; flex-direction:column; gap:10px; margin:20px 0; }
+  .layer-card{
+    border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:14px 16px; cursor:pointer;
+    transition:border-color .2s, background .2s;
+  }
+  .layer-card:hover{ border-color:var(--teal); }
+  .layer-card.open{ background:var(--surface-2); border-color:var(--teal); }
+  .lc-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .lc-title{ display:flex; align-items:center; gap:12px; }
+  .lc-num{ font-family:'JetBrains Mono'; font-size:12px; color:var(--teal); width:20px; }
+  .lc-name{ font-family:'Space Grotesk'; font-weight:600; font-size:15px; }
+  .lc-osi{ font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono'; }
+  .lc-chevron{ transition:transform .25s; color:var(--text-muted); }
+  .layer-card.open .lc-chevron{ transform:rotate(90deg); color:var(--teal); }
+  .lc-body{ max-height:0; overflow:hidden; transition:max-height .35s ease; }
+  .layer-card.open .lc-body{ max-height:260px; }
+  .lc-inner{ padding-top:12px; font-size:14px; color:var(--text-muted); }
+  .lc-inner .protos{ margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
+  .proto-chip{ font-family:'JetBrains Mono'; font-size:11.5px; background:var(--surface-2); border:1px solid var(--border); padding:3px 8px; border-radius:6px; color:var(--text); }
+
+  /* ---------- URL anatomy ---------- */
+  .url-bar{
+    font-family:'JetBrains Mono'; font-size:15px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:10px; padding:14px 16px; display:flex; flex-wrap:wrap; gap:2px; margin:18px 0 6px 0; line-height:1.9;
+  }
+  .url-part{ cursor:pointer; padding:2px 3px; border-radius:4px; transition:background .15s, color .15s; border-bottom:2px solid transparent; }
+  .url-part:hover, .url-part.active{ background:var(--teal-dim); border-bottom-color:var(--teal); color:var(--teal); }
+  .url-punct{ color:var(--text-muted); }
+  .url-explain{
+    border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:14px 16px; min-height:64px;
+    font-size:14px; color:var(--text-muted); margin-bottom:20px;
+  }
+  .url-explain b{ color:var(--text); font-family:'Space Grotesk'; }
+
+  /* ---------- Quiz ---------- */
+  .quiz-q{ border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:14px; background:var(--surface); }
+  .quiz-q p.qtext{ font-weight:600; font-family:'Space Grotesk'; margin-bottom:10px; font-size:14.5px; }
+  .quiz-opts label{ display:flex; align-items:center; gap:9px; padding:7px 4px; font-size:14px; cursor:pointer; border-radius:6px; }
+  .quiz-opts label:hover{ background:var(--surface-2); }
+  .quiz-feedback{ font-size:13px; margin-top:8px; font-family:'JetBrains Mono'; display:none; }
+  .quiz-q.correct .quiz-feedback.ok{ display:block; color:var(--teal); }
+  .quiz-q.wrong .quiz-feedback.bad{ display:block; color:var(--red); }
+  #quizScore{ font-family:'Space Grotesk'; font-weight:600; margin-top:6px; }
+
+  .btn-primary{
+    font-family:'Space Grotesk'; font-weight:600; font-size:14px; color:#06120F; background:var(--teal);
+    border:none; border-radius:8px; padding:11px 20px; cursor:pointer; margin-top:6px;
+  }
+
+  footer{ margin-top:60px; padding-top:24px; border-top:1px solid var(--border); font-size:13px; color:var(--text-muted); }
+
+  @media (max-width:900px){
+    nav.toc{ display:none; }
+    main{ padding:40px 22px 100px 22px; }
+    .hero{ padding:44px 22px 10px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="module-tag">◈ DS5105 — Information Security</span>
+  <h1>Networking foundations, before we encrypt anything</h1>
+  <p class="lede">Last term's Network Fundamentals module gave you the protocol stack. This session rebuilds it quickly, from a security lens, so the next module — cryptography — has solid ground to stand on: you can't protect a channel you can't first describe.</p>
+  <div class="hero-strip">
+    <div class="hs-line"></div>
+    <div class="hs-track">
+      <span class="hs-node">💻</span><span class="hs-node">🔀</span><span class="hs-node">📡</span><span class="hs-node">☁️</span><span class="hs-node">🖥️</span>
+    </div>
+    <div class="hs-packet"></div>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="brand">DS5105</div>
+    <span class="brand-sub">Lecture 01 · Networking Recap</span>
+    <ol id="tocList">
+      <li><a href="#intro">Roadmap</a></li>
+      <li><a href="#tcpip-model">TCP/IP model</a></li>
+      <li><a href="#encapsulation">Encapsulation</a></li>
+      <li><a href="#client-server">Client–server</a></li>
+      <li><a href="#packet-journey">Packet journey</a></li>
+      <li><a href="#protocols">Core protocols</a></li>
+      <li><a href="#ip-addressing">IP addressing</a></li>
+      <li><a href="#dhcp">DHCP</a></li>
+      <li><a href="#dns">DNS</a></li>
+      <li><a href="#url-anatomy">URL anatomy</a></li>
+      <li><a href="#bridge">Bridge to security</a></li>
+      <li><a href="#checkpoint">Checkpoint quiz</a></li>
+      <li><a href="#summary">Summary</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="content">
+
+      <section id="intro">
+        <div class="eyebrow">Where we left off, where we're going</div>
+        <h2 class="section-title">Roadmap for today</h2>
+        <p>You've already covered the core ideas of information security: the CIA triad, threat actors, risk, and why we defend systems in the first place. What's been missing is the terrain those threats actually operate on — the network. You cannot reason about a man-in-the-middle attack without knowing what "the middle" is, and you cannot reason about DNS spoofing without knowing what a normal DNS lookup looks like.</p>
+        <p>So today is a fast, technical recap: how two machines actually exchange data, structured around the journey a single request takes from your browser to a server and back. Every diagram below is click-through — step through it at your own pace.</p>
+        <div class="callout">
+          <div class="callout-head">Today's arc</div>
+          <span class="muted">TCP/IP model → encapsulation → client–server model → a packet's physical journey → the protocols that make it work (DHCP, IP, DNS) → URLs → where attackers actually sit in this picture.</span>
+        </div>
+      </section>
+
+      <section id="tcpip-model">
+        <div class="eyebrow">Recap · the stack</div>
+        <h2 class="section-title">The TCP/IP model</h2>
+        <p>Real-world networks are built and taught using the four-layer TCP/IP model (a practical cousin of the seven-layer OSI model). Each layer has one job and only talks to the layers directly above and below it. Click a layer to expand it.</p>
+
+        <div class="layer-cards" id="layerCards">
+          <div class="layer-card" data-layer="app">
+            <div class="lc-head">
+              <div class="lc-title"><span class="lc-num">04</span><span class="lc-name">Application layer</span></div>
+              <span class="lc-osi">OSI 5–7</span>
+              <span class="lc-chevron">▸</span>
+            </div>
+            <div class="lc-body"><div class="lc-inner">
+              What the user-facing program actually says: "give me this webpage", "send this email", "resolve this name". This is where your data starts life, in plain, meaningful form.
+              <div class="protos"><span class="proto-chip">HTTP/HTTPS</span><span class="proto-chip">DNS</span><span class="proto-chip">SMTP</span><span class="proto-chip">FTP</span><span class="proto-chip">DHCP</span></div>
+            </div></div>
+          </div>
+          <div class="layer-card" data-layer="transport">
+            <div class="lc-head">
+              <div class="lc-title"><span class="lc-num">03</span><span class="lc-name">Transport layer</span></div>
+              <span class="lc-osi">OSI 4</span>
+              <span class="lc-chevron">▸</span>
+            </div>
+            <div class="lc-body"><div class="lc-inner">
+              Breaks application data into manageable chunks and decides how carefully to deliver them: TCP guarantees ordered, reliable delivery with a handshake; UDP just fires and forgets, trading reliability for speed. Port numbers live here — they tell the receiving machine which application should get the data.
+              <div class="protos"><span class="proto-chip">TCP</span><span class="proto-chip">UDP</span></div>
+            </div></div>
+          </div>
+          <div class="layer-card" data-layer="internet">
+            <div class="lc-head">
+              <div class="lc-title"><span class="lc-num">02</span><span class="lc-name">Internet layer</span></div>
+              <span class="lc-osi">OSI 3</span>
+              <span class="lc-chevron">▸</span>
+            </div>
+            <div class="lc-body"><div class="lc-inner">
+              Handles addressing and routing across networks: which IP address is the source, which is the destination, and which path of routers gets a packet from one to the other. This layer has no idea what TCP port or application the data belongs to — it just moves packets toward an IP address.
+              <div class="protos"><span class="proto-chip">IPv4</span><span class="proto-chip">IPv6</span><span class="proto-chip">ICMP</span><span class="proto-chip">ARP</span></div>
+            </div></div>
+          </div>
+          <div class="layer-card" data-layer="access">
+            <div class="lc-head">
+              <div class="lc-title"><span class="lc-num">01</span><span class="lc-name">Network access layer</span></div>
+              <span class="lc-osi">OSI 1–2</span>
+              <span class="lc-chevron">▸</span>
+            </div>
+            <div class="lc-body"><div class="lc-inner">
+              The physical and local delivery layer: turning data into electrical signals, light pulses, or radio waves, and using MAC addresses to move a frame across a single local link (your laptop to the switch, the switch to the router).
+              <div class="protos"><span class="proto-chip">Ethernet</span><span class="proto-chip">Wi-Fi (802.11)</span><span class="proto-chip">MAC addressing</span></div>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="callout security">
+          <div class="callout-head">Why security cares about layers</div>
+          <span class="muted">Attacks target specific layers. ARP spoofing lives at the network access layer, IP spoofing at the internet layer, SYN floods at the transport layer, and phishing or injection at the application layer. Knowing the layer tells you which defence belongs where.</span>
+        </div>
+      </section>
+
+      <section id="encapsulation">
+        <div class="eyebrow">Recap · how data actually travels</div>
+        <h2 class="section-title">Encapsulation: wrapping data layer by layer</h2>
+        <p>Data doesn't leave your machine as raw application content. Each layer of the stack wraps the layer above it in its own header (like nesting envelopes inside envelopes), and the receiving machine unwraps them in reverse order — a process called <b>decapsulation</b>. Step through the build-up below.</p>
+
+        <div class="stepper" id="encapStepper">
+          <div class="stepper-stage">
+            <div class="encap-visual">
+              <div class="ring ring-frame step-panel" data-step="3">
+                <span class="ring-label">Frame header + trailer — network access layer</span>
+                <div class="ring ring-ip step-panel" data-step="2">
+                  <span class="ring-label">IP header — internet layer (source/destination IP)</span>
+                  <div class="ring ring-tcp step-panel" data-step="1">
+                    <span class="ring-label">TCP header — transport layer (source/destination port, sequence #)</span>
+                    <div class="ring ring-data step-panel" data-step="0">
+                      <span class="ring-label">Application data</span>
+                      <span class="ring-data-label">"GET /login HTTP/1.1"</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="step-caption" id="encapCaption"></div>
+          <div class="stepper-controls">
+            <button class="step-btn step-prev">◂ Prev</button>
+            <div class="step-dots"></div>
+            <button class="step-btn step-next">Next ▸</button>
+          </div>
+        </div>
+
+        <p class="muted" style="font-size:14px;">At each hop, the sizes have names too: <span class="mono">data → segment (with TCP header) → packet (with IP header) → frame (with link header/trailer) → bits</span> on the physical medium.</p>
+      </section>
+
+      <section id="client-server">
+        <div class="eyebrow">Recap · the architecture underneath every app</div>
+        <h2 class="section-title">Client–server architecture</h2>
+        <p>Almost everything you use online follows the same shape: a <b>client</b> (your browser, your phone app) initiates a request, and a <b>server</b> (a machine that's always listening, usually 24/7) processes it and replies. The client never talks directly to "the internet" — it talks to a specific server, at a specific IP address, on a specific port.</p>
+
+        <div class="stepper" id="csStepper">
+          <div class="stepper-stage">
+            <div class="cs-stage">
+              <div class="cs-box" id="csClient"><span class="icon">💻</span><span class="lbl">Client</span></div>
+              <div class="cs-arrow-track"><div class="cs-arrow" id="csArrow">➜</div></div>
+              <div class="cs-box" id="csServer"><span class="icon">🖥️</span><span class="lbl">Server</span></div>
+            </div>
+            <div class="step-panel" data-step="0"></div>
+            <div class="step-panel" data-step="1"></div>
+            <div class="step-panel" data-step="2"></div>
+            <div class="step-panel" data-step="3"></div>
+          </div>
+          <div class="step-caption" id="csCaption"></div>
+          <div class="stepper-controls">
+            <button class="step-btn step-prev">◂ Prev</button>
+            <div class="step-dots"></div>
+            <button class="step-btn step-next">Next ▸</button>
+          </div>
+        </div>
+
+        <div class="callout security">
+          <div class="callout-head">Where trust breaks down</div>
+          <span class="muted">The client has to trust that the server it reached really is the server it asked for, and the server has to trust that the request really came from that client. Both assumptions are exactly what spoofing, DNS poisoning, and session hijacking attack — all covered later in this module.</span>
+        </div>
+      </section>
+
+      <section id="packet-journey">
+        <div class="eyebrow">Recap · the physical hops</div>
+        <h2 class="section-title">A packet's journey across the internet</h2>
+        <p>Zooming out from any single layer: when you load a webpage, your request physically hops through several devices before it reaches the server, and the reply retraces the same path. Step through the request, then the reply.</p>
+
+        <div class="stepper" id="journeyStepper">
+          <div class="stepper-stage">
+            <div class="path-diagram">
+              <div class="path-track">
+                <div class="path-line"></div>
+                <div class="packet-dot" id="journeyPacket"></div>
+                <div class="path-node" style="left:0%" data-node="0"><div class="n-icon">💻</div><div class="n-label">Client</div></div>
+                <div class="path-node" style="left:25%" data-node="1"><div class="n-icon">🔀</div><div class="n-label">LAN switch</div></div>
+                <div class="path-node" style="left:50%" data-node="2"><div class="n-icon">📡</div><div class="n-label">Router / ISP</div></div>
+                <div class="path-node" style="left:75%" data-node="3"><div class="n-icon">☁️</div><div class="n-label">Internet backbone</div></div>
+                <div class="path-node" style="left:100%" data-node="4"><div class="n-icon">🖥️</div><div class="n-label">Server</div></div>
+              </div>
+            </div>
+            <div class="step-panel" data-step="0"></div><div class="step-panel" data-step="1"></div>
+            <div class="step-panel" data-step="2"></div><div class="step-panel" data-step="3"></div>
+            <div class="step-panel" data-step="4"></div><div class="step-panel" data-step="5"></div>
+            <div class="step-panel" data-step="6"></div><div class="step-panel" data-step="7"></div>
+            <div class="step-panel" data-step="8"></div>
+          </div>
+          <div class="step-caption" id="journeyCaption"></div>
+          <div class="stepper-controls">
+            <button class="step-btn step-prev">◂ Prev</button>
+            <div class="step-dots"></div>
+            <button class="step-btn step-next">Next ▸</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="protocols">
+        <div class="eyebrow">Recap · the vocabulary</div>
+        <h2 class="section-title">Core protocols you'll see all module</h2>
+        <p>A protocol is just an agreed set of rules two machines follow so they understand each other. These are the ones that show up constantly in security discussions — know their job and their port.</p>
+        <table>
+          <thead><tr><th>Protocol</th><th>Port</th><th>Layer</th><th>Job</th></tr></thead>
+          <tbody>
+            <tr><td>HTTP</td><td class="port">80</td><td>Application</td><td>Requests and serves web content — sent in plain text.</td></tr>
+            <tr><td>HTTPS</td><td class="port">443</td><td>Application</td><td>HTTP wrapped in TLS encryption — this is where next module begins.</td></tr>
+            <tr><td>DNS</td><td class="port">53</td><td>Application</td><td>Translates human-readable names into IP addresses.</td></tr>
+            <tr><td>DHCP</td><td class="port">67/68</td><td>Application</td><td>Automatically assigns IP configuration to new devices on a network.</td></tr>
+            <tr><td>FTP</td><td class="port">21</td><td>Application</td><td>Transfers files between hosts — also unencrypted by default.</td></tr>
+            <tr><td>SMTP</td><td class="port">25</td><td>Application</td><td>Sends email between mail servers.</td></tr>
+            <tr><td>TCP</td><td class="port">—</td><td>Transport</td><td>Reliable, ordered, connection-based delivery (three-way handshake).</td></tr>
+            <tr><td>UDP</td><td class="port">—</td><td>Transport</td><td>Fast, connectionless delivery with no delivery guarantee.</td></tr>
+            <tr><td>IP</td><td class="port">—</td><td>Internet</td><td>Addresses and routes packets between networks.</td></tr>
+            <tr><td>ICMP</td><td class="port">—</td><td>Internet</td><td>Diagnostic and error messages — what <span class="mono">ping</span> uses.</td></tr>
+            <tr><td>ARP</td><td class="port">—</td><td>Network access</td><td>Maps an IP address to a MAC address on the local network.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="ip-addressing">
+        <div class="eyebrow">Recap · addressing</div>
+        <h2 class="section-title">IP addressing, in brief</h2>
+        <p>An <b>IPv4</b> address is a 32-bit number written as four decimal octets, e.g. <span class="mono">192.168.1.45</span>. It splits into a <b>network portion</b> and a <b>host portion</b>, defined by a subnet mask — this is how a router knows whether a destination is on the local network or needs to be forwarded outward. <b>IPv6</b> exists because IPv4's roughly 4.3 billion addresses ran out; it uses 128 bits, written in hexadecimal groups like <span class="mono">2001:0db8:85a3::8a2e:0370:7334</span>.</p>
+        <p>A second distinction matters constantly in security work:</p>
+        <table>
+          <thead><tr><th>Type</th><th>Example range</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Private</td><td class="mono">10.0.0.0/8, 192.168.0.0/16</td><td>Only valid inside a local network; not routable on the open internet. Your laptop's Wi-Fi address is almost certainly one of these.</td></tr>
+            <tr><td>Public</td><td class="mono">everything else</td><td>Globally unique and routable — this is the address the outside world sees, usually assigned to your router by your ISP.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <div class="callout-head">Why this matters later</div>
+          <span class="muted">Firewalls, VPNs, and NAT (network address translation) all exist because of this public/private split. When you scan a target's exposed surface in a later module, you're really asking: which of their addresses are public, and what's listening there?</span>
+        </div>
+      </section>
+
+      <section id="dhcp">
+        <div class="eyebrow">Recap · how a device gets online</div>
+        <h2 class="section-title">DHCP: getting an address automatically</h2>
+        <p>When your laptop joins a Wi-Fi network, it doesn't already have an IP address — it has to ask for one. The <b>Dynamic Host Configuration Protocol</b> hands this out automatically using a four-step exchange, remembered by the acronym <b>DORA</b>. Reveal each step.</p>
+
+        <div class="stepper" id="dhcpStepper">
+          <div class="stepper-stage">
+            <div class="bubble-stage">
+              <div class="bubble left step-panel" data-step="0"><span class="b-tag">1 · DISCOVER (client → broadcast)</span>"Is any DHCP server out there? I just joined this network and I need an IP address."</div>
+              <div class="bubble right step-panel" data-step="1"><span class="b-tag">2 · OFFER (server → client)</span>"I can offer you 192.168.1.45, subnet mask 255.255.255.0, for a 24-hour lease."</div>
+              <div class="bubble left step-panel" data-step="2"><span class="b-tag">3 · REQUEST (client → broadcast)</span>"Thanks — I'd like to formally request 192.168.1.45, the address you offered me."</div>
+              <div class="bubble right step-panel" data-step="3"><span class="b-tag">4 · ACKNOWLEDGE (server → client)</span>"Confirmed. 192.168.1.45 is yours, along with your gateway and DNS server addresses."</div>
+            </div>
+          </div>
+          <div class="stepper-controls">
+            <button class="step-btn step-prev">◂ Prev</button>
+            <div class="step-dots"></div>
+            <button class="step-btn step-next">Next ▸</button>
+          </div>
+        </div>
+
+        <div class="callout security">
+          <div class="callout-head">A well-known abuse of this trust</div>
+          <span class="muted">Because DISCOVER and REQUEST are broadcast to anyone listening, an attacker running a rogue DHCP server on the same network can race the real one and hand out a lease that quietly points your DNS or gateway at a machine they control — a classic setup for a man-in-the-middle position.</span>
+        </div>
+      </section>
+
+      <section id="dns">
+        <div class="eyebrow">Recap · turning names into addresses</div>
+        <h2 class="section-title">DNS: the internet's phonebook</h2>
+        <p>Machines route by IP address, but humans type names like <span class="mono">example.com</span>. The <b>Domain Name System</b> resolves one into the other through a chain of servers, none of which know the full answer alone. Step through a typical lookup.</p>
+
+        <div class="stepper" id="dnsStepper">
+          <div class="stepper-stage">
+            <div class="bubble-stage">
+              <div class="bubble left step-panel" data-step="0"><span class="b-tag">Your browser → recursive resolver</span>"What's the IP address for www.example.com?"</div>
+              <div class="bubble right step-panel" data-step="1"><span class="b-tag">Resolver → root server</span>"I don't know it either — resolver asks a root server: which server handles the .com domain?"</div>
+              <div class="bubble left step-panel" data-step="2"><span class="b-tag">Root server → resolver</span>"I don't have the address, but ask this .com TLD server."</div>
+              <div class="bubble right step-panel" data-step="3"><span class="b-tag">Resolver → TLD server → resolver</span>"Ask the authoritative name server for example.com — here's its address."</div>
+              <div class="bubble left step-panel" data-step="4"><span class="b-tag">Resolver → authoritative server</span>"What's the A record for www.example.com?" → "It's 93.184.216.34."</div>
+              <div class="bubble right step-panel" data-step="5"><span class="b-tag">Resolver → your browser</span>"Here's the address: 93.184.216.34 — and I'll cache it so the next lookup is instant."</div>
+            </div>
+          </div>
+          <div class="stepper-controls">
+            <button class="step-btn step-prev">◂ Prev</button>
+            <div class="step-dots"></div>
+            <button class="step-btn step-next">Next ▸</button>
+          </div>
+        </div>
+
+        <div class="callout security">
+          <div class="callout-head">Why this chain is a favourite target</div>
+          <span class="muted">DNS replies were designed with no built-in way to verify the responder is who it claims to be. DNS spoofing / cache poisoning exploits exactly that gap — feeding a resolver a forged answer so it caches the wrong IP and quietly redirects everyone. DNSSEC, covered later, is the cryptographic fix.</span>
+        </div>
+      </section>
+
+      <section id="url-anatomy">
+        <div class="eyebrow">Recap · reading an address correctly</div>
+        <h2 class="section-title">Anatomy of a URL</h2>
+        <p>You'll be asked to spot malicious links throughout this module, so being able to parse a URL precisely — not just glance at it — matters. Click each part.</p>
+
+        <div class="url-bar" id="urlBar">
+          <span class="url-part" data-part="scheme">https</span><span class="url-punct">://</span><span class="url-part" data-part="sub">www.</span><span class="url-part" data-part="domain">example.com</span><span class="url-part" data-part="port">:443</span><span class="url-part" data-part="path">/account/settings</span><span class="url-part" data-part="query">?tab=security&amp;ref=email</span><span class="url-part" data-part="frag">#password</span>
+        </div>
+        <div class="url-explain" id="urlExplain">Click any highlighted part of the URL above to see what it means.</div>
+      </section>
+
+      <section id="bridge">
+        <div class="eyebrow">Where the plaintext problem lives</div>
+        <h2 class="section-title">Bridging into cryptography</h2>
+        <p>Notice something about everything you just walked through: the HTTP request, the DHCP conversation, the DNS lookup — none of it is secret by default. A packet crossing the network access layer is, physically, a signal anyone with access to that link can capture. This is the entire premise the next module is built on.</p>
+        <table>
+          <thead><tr><th>What you saw today</th><th>What can go wrong</th><th>What fixes it (coming up)</th></tr></thead>
+          <tbody>
+            <tr><td>HTTP request/response</td><td>Readable in transit — credentials, cookies, content all exposed to anyone on the path.</td><td>TLS / HTTPS</td></tr>
+            <tr><td>DNS lookup</td><td>Unauthenticated responses can be forged (spoofing, cache poisoning).</td><td>DNSSEC, DNS-over-HTTPS</td></tr>
+            <tr><td>DHCP exchange</td><td>Broadcast and unauthenticated — a rogue server can hijack it.</td><td>Port security, DHCP snooping</td></tr>
+            <tr><td>IP packet</td><td>Source address can be forged (IP spoofing).</td><td>Ingress filtering, IPsec</td></tr>
+            <tr><td>ARP mapping</td><td>No authentication of who claims which IP (ARP spoofing).</td><td>Dynamic ARP inspection, static entries</td></tr>
+          </tbody>
+        </table>
+        <p>Every one of these fixes is, at its core, a way of adding <b>confidentiality</b>, <b>integrity</b>, or <b>authenticity</b> to a channel that has none by default — which is precisely what cryptography gives you. That's next week.</p>
+      </section>
+
+      <section id="checkpoint">
+        <div class="eyebrow">Quick self-check</div>
+        <h2 class="section-title">Checkpoint quiz</h2>
+        <p>Five quick questions before we move on. Pick an answer for each, then check.</p>
+
+        <form id="quizForm">
+          <div class="quiz-q" data-answer="c">
+            <p class="qtext">1. Which layer of the TCP/IP model is responsible for routing a packet between networks using IP addresses?</p>
+            <div class="quiz-opts">
+              <label><input type="radio" name="q1" value="a"> Application layer</label>
+              <label><input type="radio" name="q1" value="b"> Transport layer</label>
+              <label><input type="radio" name="q1" value="c"> Internet layer</label>
+              <label><input type="radio" name="q1" value="d"> Network access layer</label>
+            </div>
+            <div class="quiz-feedback ok">Correct — the internet layer handles IP addressing and routing.</div>
+            <div class="quiz-feedback bad">Not quite — that's the internet layer's job (IP addressing and routing).</div>
+          </div>
+
+          <div class="quiz-q" data-answer="b">
+            <p class="qtext">2. In the DHCP DORA process, what does the client send first?</p>
+            <div class="quiz-opts">
+              <label><input type="radio" name="q2" value="a"> An acknowledgement</label>
+              <label><input type="radio" name="q2" value="b"> A broadcast discover message</label>
+              <label><input type="radio" name="q2" value="c"> A DNS query</label>
+              <label><input type="radio" name="q2" value="d"> A TCP handshake</label>
+            </div>
+            <div class="quiz-feedback ok">Correct — DISCOVER is a broadcast, since the client doesn't yet know a DHCP server's address.</div>
+            <div class="quiz-feedback bad">Not quite — the client starts with a broadcast DISCOVER message.</div>
+          </div>
+
+          <div class="quiz-q" data-answer="d">
+            <p class="qtext">3. Which server in a DNS lookup actually holds the real IP address for a specific domain?</p>
+            <div class="quiz-opts">
+              <label><input type="radio" name="q3" value="a"> The root server</label>
+              <label><input type="radio" name="q3" value="b"> The recursive resolver</label>
+              <label><input type="radio" name="q3" value="c"> The TLD server</label>
+              <label><input type="radio" name="q3" value="d"> The authoritative name server</label>
+            </div>
+            <div class="quiz-feedback ok">Correct — the authoritative server holds the actual DNS records for that domain.</div>
+            <div class="quiz-feedback bad">Not quite — that's the authoritative name server's role.</div>
+          </div>
+
+          <div class="quiz-q" data-answer="a">
+            <p class="qtext">4. In the URL https://www.example.com:443/account?tab=security, what is "tab=security"?</p>
+            <div class="quiz-opts">
+              <label><input type="radio" name="q4" value="a"> A query parameter</label>
+              <label><input type="radio" name="q4" value="b"> The path</label>
+              <label><input type="radio" name="q4" value="c"> The scheme</label>
+              <label><input type="radio" name="q4" value="d"> The port</label>
+            </div>
+            <div class="quiz-feedback ok">Correct — it's a query parameter, passing extra data to the page.</div>
+            <div class="quiz-feedback bad">Not quite — "tab=security" is a query parameter.</div>
+          </div>
+
+          <div class="quiz-q" data-answer="c">
+            <p class="qtext">5. Why is plain HTTP considered a security risk on its own?</p>
+            <div class="quiz-opts">
+              <label><input type="radio" name="q5" value="a"> It doesn't use port numbers</label>
+              <label><input type="radio" name="q5" value="b"> It can't reach public IP addresses</label>
+              <label><input type="radio" name="q5" value="c"> It sends data in plain text, readable to anyone on the path</label>
+              <label><input type="radio" name="q5" value="d"> It only works over UDP</label>
+            </div>
+            <div class="quiz-feedback ok">Correct — with no encryption, anyone intercepting the traffic can read it directly.</div>
+            <div class="quiz-feedback bad">Not quite — the core issue is that HTTP sends everything unencrypted.</div>
+          </div>
+
+          <button type="button" class="btn-primary" id="checkQuiz">Check answers</button>
+          <div id="quizScore"></div>
+        </form>
+      </section>
+
+      <section id="summary">
+        <div class="eyebrow">Before you go</div>
+        <h2 class="section-title">Summary</h2>
+        <p>Today's session re-established the network layer as the terrain of information security: the four-layer TCP/IP model, how data is encapsulated on the way out and decapsulated on the way in, the client–server relationship underneath every app you use, and the physical hops a packet takes across switches, routers, and the backbone. We then walked through the protocols that make that journey possible — DHCP getting you online, IP addressing you, DNS naming everything, and the URL as the human-readable interface to all of it.</p>
+        <p>The thread running through every one of these mechanisms is the same: none of them were designed with an adversary in mind. Next session, we start fixing that with cryptography — building confidentiality, integrity, and authenticity into a stack that, as you've just seen, has none of it by default.</p>
+      </section>
+
+      <footer>DS5105 — Information Security · Lecture note 01 · Networking Recap</footer>
+    </div>
+  </main>
+</div>
+
+<script>
+// ---------- generic exclusive stepper ----------
+function initStepper(id, captions, onStep){
+  const root = document.getElementById(id);
+  const panels = [...root.querySelectorAll('.step-panel')];
+  const dotsWrap = root.querySelector('.step-dots');
+  const prevBtn = root.querySelector('.step-prev');
+  const nextBtn = root.querySelector('.step-next');
+  const captionEl = root.querySelector('.step-caption');
+  let idx = 0;
+  panels.forEach((p,i)=>{
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.type = 'button';
+    d.setAttribute('aria-label', 'Go to step ' + (i+1));
+    d.addEventListener('click', ()=>go(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = [...dotsWrap.children];
+  function render(){
+    panels.forEach((p,i)=>p.classList.toggle('active', i===idx));
+    dots.forEach((d,i)=>d.classList.toggle('active', i===idx));
+    if(captionEl && captions) captionEl.textContent = captions[idx] || '';
+    prevBtn.disabled = idx===0;
+    nextBtn.disabled = idx===panels.length-1;
+    if(onStep) onStep(idx);
+  }
+  function go(i){ idx = Math.max(0, Math.min(panels.length-1, i)); render(); }
+  prevBtn.addEventListener('click', ()=>go(idx-1));
+  nextBtn.addEventListener('click', ()=>go(idx+1));
+  render();
+}
+
+// ---------- generic cumulative reveal stepper (bubbles) ----------
+function initRevealStepper(id){
+  const root = document.getElementById(id);
+  const panels = [...root.querySelectorAll('.step-panel')];
+  const dotsWrap = root.querySelector('.step-dots');
+  const prevBtn = root.querySelector('.step-prev');
+  const nextBtn = root.querySelector('.step-next');
+  let idx = -1;
+  panels.forEach((p,i)=>{
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.type = 'button';
+    d.setAttribute('aria-label', 'Reveal up to step ' + (i+1));
+    d.addEventListener('click', ()=>go(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = [...dotsWrap.children];
+  function render(){
+    panels.forEach((p,i)=>p.classList.toggle('visible', i<=idx));
+    dots.forEach((d,i)=>d.classList.toggle('active', i<=idx));
+    prevBtn.disabled = idx<=-1;
+    nextBtn.disabled = idx>=panels.length-1;
+  }
+  function go(i){ idx = Math.max(-1, Math.min(panels.length-1, i)); render(); }
+  prevBtn.addEventListener('click', ()=>go(idx-1));
+  nextBtn.addEventListener('click', ()=>go(idx+1));
+  render();
+}
+
+// Encapsulation stepper
+initStepper('encapStepper', [
+  'Step 1 of 4 — raw application data, before any headers are added.',
+  'Step 2 of 4 — the transport layer adds a TCP header: this is now a "segment".',
+  'Step 3 of 4 — the internet layer adds an IP header: this is now a "packet".',
+  'Step 4 of 4 — the network access layer adds a frame header/trailer: this is now a "frame", ready to become bits on the wire.'
+]);
+
+// Client-server stepper
+initStepper('csStepper', [
+  'Step 1 of 4 — the client opens a connection and sends a request.',
+  'Step 2 of 4 — the request arrives; the server processes it (reads a database, runs logic, etc).',
+  'Step 3 of 4 — the server sends a response back to the client.',
+  'Step 4 of 4 — the client receives the response and renders it (e.g. draws the webpage).'
+], function(i){
+  const client = document.getElementById('csClient');
+  const server = document.getElementById('csServer');
+  const arrow = document.getElementById('csArrow');
+  const track = arrow.parentElement;
+  const trackWidth = track.clientWidth;
+  arrow.classList.add('show');
+  if(i===0){ client.classList.add('active'); server.classList.remove('active'); arrow.style.left='0px'; arrow.textContent='➜'; }
+  if(i===1){ client.classList.remove('active'); server.classList.add('active'); arrow.style.left=(trackWidth-22)+'px'; arrow.textContent='➜'; }
+  if(i===2){ server.classList.add('active'); client.classList.remove('active'); arrow.style.left=(trackWidth-22)+'px'; arrow.textContent='◂'; }
+  if(i===3){ client.classList.add('active'); server.classList.remove('active'); arrow.style.left='0px'; arrow.textContent='◂'; }
+});
+
+// Packet journey stepper: positions 0,25,50,75,100 forward then back
+(function(){
+  const positions = [0,25,50,75,100,75,50,25,0];
+  const captionsFwd = [
+    'Your device builds the request and puts it on the local network.',
+    'The local switch forwards the frame toward your router based on MAC address.',
+    'Your router (and ISP) forwards the packet outward based on the destination IP.',
+    'The packet crosses the internet backbone, hopping between many routers.',
+    'The packet arrives at the destination server, which reads the request.',
+    'The server sends a response, which starts its own journey back...',
+    '...back across the backbone...',
+    "...through your ISP's router...",
+    'The reply arrives back at your device, and the browser renders the page.'
+  ];
+  initStepper('journeyStepper', captionsFwd, function(i){
+    const packet = document.getElementById('journeyPacket');
+    packet.style.left = positions[i] + '%';
+    packet.classList.toggle('reply', i>=5);
+    document.querySelectorAll('#journeyStepper .path-node').forEach(n=>{
+      const nodePos = Number(n.style.left.replace('%',''));
+      n.classList.toggle('active', Math.abs(nodePos - positions[i])<1);
+    });
+  });
+})();
+
+initRevealStepper('dhcpStepper');
+initRevealStepper('dnsStepper');
+
+// TCP/IP model layer accordion
+document.querySelectorAll('.layer-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const wasOpen = card.classList.contains('open');
+    document.querySelectorAll('.layer-card').forEach(c=>c.classList.remove('open'));
+    if(!wasOpen) card.classList.add('open');
+  });
+});
+
+// URL anatomy
+const urlInfo = {
+  scheme: '<b>Scheme</b> — tells the browser which protocol to use. "https" means the connection will be encrypted with TLS.',
+  sub: '<b>Subdomain</b> — an optional prefix identifying a specific host or service within the domain, such as "www" or "mail".',
+  domain: '<b>Domain (registered name)</b> — the part you register and that DNS ultimately resolves to an IP address. This is the part attackers most often try to disguise in phishing links.',
+  port: "<b>Port</b> — which application on the server should handle this request. 443 is the default for HTTPS, so it's usually hidden.",
+  path: '<b>Path</b> — the specific resource being requested on the server, similar to a file path.',
+  query: '<b>Query string</b> — extra key-value parameters sent to the server, starting after "?".',
+  frag: '<b>Fragment</b> — a reference to a specific spot within the page (like an anchor); this part never leaves your browser or reaches the server.'
+};
+const urlParts = document.querySelectorAll('.url-part');
+const urlExplain = document.getElementById('urlExplain');
+urlParts.forEach(p=>{
+  p.addEventListener('click', ()=>{
+    urlParts.forEach(o=>o.classList.remove('active'));
+    p.classList.add('active');
+    urlExplain.innerHTML = urlInfo[p.dataset.part];
+  });
+});
+
+// Quiz
+document.getElementById('checkQuiz').addEventListener('click', ()=>{
+  let score = 0;
+  document.querySelectorAll('.quiz-q').forEach(q=>{
+    const name = q.querySelector('input').name;
+    const chosen = q.querySelector('input[name="'+name+'"]:checked');
+    q.classList.remove('correct','wrong');
+    if(!chosen){ return; }
+    if(chosen.value === q.dataset.answer){ q.classList.add('correct'); score++; }
+    else{ q.classList.add('wrong'); }
+  });
+  document.getElementById('quizScore').textContent = 'Score: ' + score + ' / 5';
+});
+
+// TOC active-section highlight
+const sections = document.querySelectorAll('main section[id]');
+const tocLinks = document.querySelectorAll('nav.toc a');
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    const link = document.querySelector('nav.toc a[href="#'+entry.target.id+'"]');
+    if(entry.isIntersecting){
+      tocLinks.forEach(l=>l.classList.remove('active'));
+      if(link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
