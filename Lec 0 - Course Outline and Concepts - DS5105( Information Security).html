@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DS5105 – Information Security | Introduction</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --text:#172033; --muted:#657089;
+  --primary:#3157d5; --primary2:#6c4ce6; --line:#e4e8f0;
+  --soft:#eef2ff; --accent:#10a37f; --shadow:0 12px 35px rgba(25,35,65,.09);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.7}
+.hero{
+  min-height:570px;padding:80px 8% 70px;display:flex;align-items:center;
+  color:white;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#111b3a 0%,#253e91 52%,#6847c7 100%);
+}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero:before{width:430px;height:430px;right:-100px;top:-130px}
+.hero:after{width:300px;height:300px;left:-100px;bottom:-140px}
+.hero-content{max-width:1050px;position:relative;z-index:2}
+.eyebrow{letter-spacing:3px;text-transform:uppercase;font-size:.82rem;font-weight:700;opacity:.8}
+h1{font-size:clamp(2.5rem,6vw,5rem);line-height:1.05;margin:15px 0 20px}
+.hero p{font-size:1.2rem;max-width:800px;color:#e9edff}
+.badges{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.badge{padding:8px 15px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.1);font-size:.9rem}
+nav{
+  position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+  padding:10px 5%;display:flex;gap:8px;overflow:auto
+}
+nav a{white-space:nowrap;text-decoration:none;color:#46516a;padding:8px 13px;border-radius:9px;font-size:.9rem}
+nav a:hover{background:var(--soft);color:var(--primary)}
+main{max-width:1100px;margin:auto;padding:55px 22px}
+section{margin-bottom:65px;scroll-margin-top:75px}
+h2{font-size:2rem;margin:0 0 12px}
+h3{font-size:1.25rem;margin-bottom:7px}
+.lead{font-size:1.08rem;color:var(--muted);max-width:850px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:25px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:25px;box-shadow:var(--shadow)
+}
+.card .icon{font-size:2rem;margin-bottom:8px}
+.quote{
+  margin:30px 0;padding:28px 30px;border-left:5px solid var(--primary);
+  background:linear-gradient(90deg,#eef2ff,#fff);border-radius:0 16px 16px 0;
+  font-size:1.35rem;font-weight:650
+}
+.reading-card{
+  margin-bottom: 4px;
+}
+.cia{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:25px}
+.cia .card{position:relative;overflow:hidden}
+.cia .card:after{content:"";position:absolute;right:-30px;bottom:-45px;width:110px;height:110px;border-radius:50%;background:var(--soft)}
+table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+th,td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--line)}
+th{background:#f0f3fa}
+tr:last-child td{border-bottom:0}
+.flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:30px 0}
+.step{background:white;border:1px solid var(--line);padding:13px 17px;border-radius:12px;box-shadow:0 5px 18px rgba(25,35,65,.06);font-weight:650}
+.arrow{color:var(--primary);font-weight:900;font-size:1.3rem}
+.mindset{background:#101a35;color:white;border-radius:22px;padding:35px;margin-top:25px}
+.mindset .flow .step{color:var(--text)}
+.callout{background:#edf9f5;border:1px solid #ccefe3;border-radius:18px;padding:25px}
+.reading{background:white;border-radius:22px;padding:35px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.reading .email{background:#f6f7fa;border:1px solid #dfe3eb;border-radius:12px;padding:20px;font-family:Arial;margin:20px 0}
+.reading{display: flex; flex-direction: column;}
+.footer{text-align:center;padding:45px 20px;background:#101a35;color:#cbd3e9}
+.footer strong{color:white}
+@media(max-width:700px){
+  .hero{padding:65px 7%}
+  .cia{grid-template-columns:1fr}
+  main{padding:40px 16px}
+  h2{font-size:1.65rem}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-content">
+    <div class="eyebrow">DS5105 • Information Security</div>
+    <h1>Introduction to<br>Information Security</h1>
+    <p>Welcome to the course. We move from understanding how information systems work to understanding how information, systems, people, and services can be protected.</p>
+    <div class="badges">
+      <span class="badge">2 Credits</span>
+      <span class="badge">Semester V</span>
+      <span class="badge">30 Hours Theory</span>
+      <span class="badge">70 Hours Independent Learning</span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <a href="#overview">Overview</a>
+  <a href="#why">Why Security?</a>
+  <a href="#cia">CIA Triad</a>
+  <a href="#threats">Threats</a>
+  <a href="#lifecycle">Life Cycle</a>
+  <a href="#learning">Learning</a>
+  <a href="#assessment">Assessment</a>
+  <a href="#reading">Reading</a>
+</nav>
+
+<main>
+
+<section id="overview">
+  <h2>Course Overview</h2>
+  <p class="lead">Information security is concerned with protecting information, information systems, people, devices, and organizational resources from unauthorized access, misuse, modification, disruption, destruction, and other security threats.</p>
+  <div class="quote">“How can we make sure that the system, its data, and its users remain secure?”</div>
+  <p>Security should not be treated as something added after a system is developed. It needs to be considered throughout the life of an information system.</p>
+</section>
+
+<section id="why">
+  <h2>Why Information Security Matters</h2>
+  <p>Almost every modern activity depends on information systems.</p>
+  <div class="grid">
+    <div class="card"><div class="icon">🏦</div><h3>Online Banking</h3><p>Financial transactions and account information depend on trustworthy systems.</p></div>
+    <div class="card"><div class="icon">🏥</div><h3>Healthcare</h3><p>Sensitive patient information must remain protected and available.</p></div>
+    <div class="card"><div class="icon">🛒</div><h3>E-Commerce</h3><p>Customers, payments, orders, and business information require protection.</p></div>
+    <div class="card"><div class="icon">☁️</div><h3>Cloud Services</h3><p>Organizations increasingly rely on remotely hosted data and services.</p></div>
+    <div class="card"><div class="icon">🎓</div><h3>University Systems</h3><p>Student records, examinations, research, and administration all rely on information systems.</p></div>
+    <div class="card"><div class="icon">📱</div><h3>Mobile Applications</h3><p>Apps continuously collect, process, transmit, and store information.</p></div>
+  </div>
+  <div class="callout" style="margin-top:25px"><strong>Security failures can lead to:</strong> financial loss, privacy violations, service disruption, data manipulation, identity theft, reputational damage, and legal consequences.</div>
+</section>
+
+<section id="cia">
+  <h2>The CIA Triad</h2>
+  <p class="lead">Three fundamental security properties provide a foundation for thinking about information security.</p>
+  <div class="cia">
+    <div class="card"><div class="icon">🔒</div><h3>Confidentiality</h3><p>Information should only be accessible to authorized individuals or systems.</p><strong>Example:</strong> A student's examination results should not be accessible to another student.</div>
+    <div class="card"><div class="icon">✓</div><h3>Integrity</h3><p>Information should remain accurate, complete, and trustworthy.</p><strong>Example:</strong> An unauthorized person should not be able to change a student's grade.</div>
+    <div class="card"><div class="icon">⚡</div><h3>Availability</h3><p>Information and services should be available when authorized users need them.</p><strong>Example:</strong> An online banking system should remain accessible when customers need it.</div>
+  </div>
+</section>
+
+
+<section id="threats">
+  <h2>Threat, Vulnerability and Attack</h2>
+  <p class="lead">These concepts help us describe how security incidents can occur.</p>
+  <table>
+    <tr><th>Concept</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><strong>Threat</strong></td><td>A potential cause of harm to a system or information.</td><td>Malware, attacker, insider threat, human error.</td></tr>
+    <tr><td><strong>Vulnerability</strong></td><td>A weakness that can potentially be exploited.</td><td>Weak password, unpatched software, incorrect permissions.</td></tr>
+    <tr><td><strong>Attack</strong></td><td>An attempt to exploit a vulnerability.</td><td>Using a weak password to gain unauthorized access.</td></tr>
+  </table>
+  <div class="flow">
+    <div class="step">Weakness</div><div class="arrow">→</div>
+    <div class="step">Threat</div><div class="arrow">→</div>
+    <div class="step">Attack</div><div class="arrow">→</div>
+    <div class="step">Impact</div>
+  </div>
+</section>
+
+<section id="lifecycle">
+  <h2>Security as a Life Cycle</h2>
+  <p class="lead">Security does not end when a system is deployed. It requires continuous attention.</p>
+  <div class="flow">
+    <div class="step">Design</div><div class="arrow">→</div>
+    <div class="step">Implementation</div><div class="arrow">→</div>
+    <div class="step">Operation</div><div class="arrow">→</div>
+    <div class="step">Monitoring</div><div class="arrow">→</div>
+    <div class="step">Detection</div><div class="arrow">→</div>
+    <div class="step">Response</div><div class="arrow">→</div>
+    <div class="step">Recovery</div><div class="arrow">→</div>
+    <div class="step">Improvement ↺</div>
+  </div>
+
+</section>
+
+<section id="learning">
+  <h2>What You Will Develop</h2>
+  <div class="grid">
+    <div class="card"><h3>Security Foundations</h3><p>Understand fundamental security concepts and principles.</p></div>
+    <div class="card"><h3>Security Mechanisms</h3><p>Understand mechanisms such as cryptography, steganography, authentication, authorization, and access control.</p></div>
+    <div class="card"><h3>Information Assurance</h3><p>Understand threats, vulnerabilities, attacks, and countermeasures.</p></div>
+    <div class="card"><h3>Security Operations</h3><p>Explore auditing, asset management, standards, cost-benefit considerations, and legal issues.</p></div>
+    <div class="card"><h3>Security Attacks</h3><p>Understand social engineering, denial of service, protocol attacks, malware, and other attacks.</p></div>
+    <div class="card"><h3>Digital Forensics</h3><p>Understand digital evidence, rules of evidence, search and seizure, and media analysis.</p></div>
+  </div>
+</section>
+
+<section id="assessment">
+  <h2>Assessment Structure</h2>
+  <p class="lead">The course combines continuous assessment with a final assessment.</p>
+  <div class="grid">
+    <div class="card"><h3>Continuous Assessment</h3><p style="font-size:2rem;font-weight:800;margin:5px 0">30%</p><p>Quizzes: 20%<br>Mid-term: 30%<br>Assignments: 50%</p></div>
+    <div class="card"><h3>Final Assessment</h3><p style="font-size:2rem;font-weight:800;margin:5px 0">70%</p><p>Theory: 100% of the final assessment.</p></div>
+  </div>
+  <p style="margin-top:22px">Learning is supported through lectures, information retrieval, LMS questions, Q&A sessions, and group presentations.</p>
+</section>
+
+<section>
+  <h2>Independent Learning</h2>
+  <p class="lead">Information security changes continuously. New vulnerabilities, malware, attack techniques, technologies, standards, tools, and defensive techniques continue to emerge.</p>
+  <div class="quote">Question → Investigate → Analyze → Explain → Apply</div>
+  <p>The course specification recommends <em>Introduction to Information Security: A Strategic-Based Approach</em> by Timothy and Jonathan, and <em>Network Security Essentials: Applications and Standards</em> by William Stallings. It also references journals in information assurance, cybersecurity, and information security applications.</p>
+</section>
+
+<section id="reading">
+  <h2>Recommended Reading</h2>
+   
+    <div class="reading">
+      <div class="card reading-card">1. Introduction to Information Security: A Strategic-based Approach by Timothy Shimeall & J.M. Spring</div>
+      <div class="card reading-card">2. Network Security Essentials: Applications and Standards (Fourth edition) by W Stallings
+</div>
+      <div class="card reading-card">3. Journal of Information Assurance and Security</div>
+      <div class="card reading-card">4. Journal of Information Security and Applications</div>
+    </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <strong>DS5105 – Information Security</strong><br>
+  Course Introduction • Semester V
+</footer>
+
+</body>
+</html>

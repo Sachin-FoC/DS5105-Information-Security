@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DS 5105 :: Basic Security Concepts II</title>
+<style>
+:root{
+  --void:#0A0E14;
+  --panel:#121821;
+  --panel2:#171F2A;
+  --panel3:#1D2632;
+  --line:#25303D;
+  --line-soft:#1C2530;
+  --text:#E9EEF4;
+  --muted:#8B98A7;
+  --muted2:#5E6B79;
+  --confid:#3FD0C9;
+  --confid-dim:#1C4643;
+  --integ:#EBA847;
+  --integ-dim:#4A3A1C;
+  --avail:#6FCF97;
+  --avail-dim:#1F3F30;
+  --trudy:#EA5C68;
+  --trudy-dim:#4A2226;
+  --alice:#A497FF;
+  --bob:#5FA6FF;
+  --risk-low:#4FAE7A;
+  --risk-med:#D6B24C;
+  --risk-high:#E08A3F;
+  --risk-crit:#DD5257;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --sans: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -5%, rgba(63,208,201,0.08), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 90% 10%, rgba(95,166,255,0.07), transparent 55%),
+    var(--void);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--confid);color:#04211f;}
+a{color:var(--confid);}
+
+/* ---------- scaffolding ---------- */
+.wrap{max-width:980px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted2);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.eyebrow .tag{
+  border:1px solid var(--line);
+  padding:2px 8px;
+  border-radius:3px;
+  color:var(--muted);
+}
+h1,h2,h3{font-family:var(--mono); font-weight:700; letter-spacing:-0.01em; margin:0;}
+.section{padding:88px 0; border-bottom:1px solid var(--line-soft);}
+.section:last-of-type{border-bottom:none;}
+.section h2{font-size:28px; color:var(--text);}
+.section .lede{color:var(--muted); max-width:680px; font-size:16px; margin-top:14px;}
+p{color:#C7D0D9; font-size:15.5px;}
+strong{color:var(--text);}
+code{font-family:var(--mono); background:var(--panel2); padding:1px 6px; border-radius:4px; font-size:0.9em; border:1px solid var(--line);}
+.small-note{font-family:var(--mono); font-size:12px; color:var(--muted2); margin-top:10px;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(10px);
+  background:rgba(10,14,20,0.82);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:980px;margin:0 auto;padding:0 24px;
+  height:52px; display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--mono); font-size:12px; color:var(--muted);
+}
+.topbar-inner .brand{color:var(--text); letter-spacing:.06em;}
+.topbar-inner .brand b{color:var(--confid);}
+.topbar-inner .nav{display:flex; gap:16px;}
+.topbar-inner .nav a{color:var(--muted); text-decoration:none; font-size:11.5px;}
+.topbar-inner .nav a:hover{color:var(--confid);}
+.progress-track{position:absolute; bottom:-1px; left:0; height:2px; width:100%; background:transparent;}
+.progress-bar{height:2px; width:0%; background:linear-gradient(90deg,var(--confid),var(--bob)); transition:width .1s linear;}
+
+/* ---------- hero ---------- */
+.hero{padding:76px 0 60px;}
+.hero-top{display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;}
+.hero h1{font-size:42px; line-height:1.14; max-width:700px;}
+.hero h1 .accent{color:var(--confid);}
+.hero .sub{color:var(--muted); font-size:16px; max-width:580px; margin-top:16px;}
+.module-badge{
+  font-family:var(--mono); font-size:11px; color:var(--muted);
+  border:1px solid var(--line); border-radius:6px; padding:10px 14px;
+  white-space:nowrap;
+}
+.module-badge .code{color:var(--confid); font-size:14px; display:block; margin-bottom:2px;}
+.toc{display:flex; flex-wrap:wrap; gap:8px; margin-top:30px;}
+.toc a{
+  font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none;
+  border:1px solid var(--line); border-radius:20px; padding:6px 12px; transition:all .15s ease;
+}
+.toc a:hover{color:var(--confid); border-color:var(--confid);}
+
+.stage{
+  margin-top:36px; border:1px solid var(--line); border-radius:10px;
+  background:linear-gradient(180deg, var(--panel), var(--panel2));
+  padding:28px 20px 22px; position:relative; overflow:hidden;
+}
+.stage-label{position:absolute; top:12px; left:16px; font-family:var(--mono); font-size:10px; color:var(--muted2); letter-spacing:.1em; text-transform:uppercase;}
+.stage-label2{position:absolute; top:12px; right:16px; font-family:var(--mono); font-size:10px; color:var(--muted2);}
+svg{display:block;}
+.node-label{font-family:var(--mono); font-size:12px; fill:var(--text); font-weight:700;}
+.node-sub{font-family:var(--mono); font-size:9px; fill:var(--muted2);}
+.wire{stroke:var(--line); stroke-width:1.5; fill:none; stroke-dasharray:4 4;}
+.packet{filter:drop-shadow(0 0 6px rgba(63,208,201,.6));}
+
+@keyframes pulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.14);} }
+.pulse{animation:pulse 2.2s ease-in-out infinite;}
+
+.cast{display:flex; gap:14px; margin-top:26px; flex-wrap:wrap;}
+.cast-card{
+  flex:1; min-width:200px; border:1px solid var(--line); border-radius:8px; padding:14px 14px;
+  background:var(--panel); display:flex; gap:12px; align-items:center;
+}
+.cast-dot{width:34px;height:34px;border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px;}
+.cast-card.alice .cast-dot{background:rgba(164,151,255,.15); color:var(--alice); border:1px solid rgba(164,151,255,.4);}
+.cast-card.bob .cast-dot{background:rgba(95,166,255,.15); color:var(--bob); border:1px solid rgba(95,166,255,.4);}
+.cast-card.trudy .cast-dot{background:rgba(234,92,104,.15); color:var(--trudy); border:1px solid rgba(234,92,104,.4);}
+.cast-card .name{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--text);}
+.cast-card .role{font-size:12px; color:var(--muted);}
+.key-hint{font-family:var(--mono); font-size:11px; color:var(--muted2); margin-top:8px;}
+
+/* ---------- generic recap grid ---------- */
+.recap-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:28px;}
+@media(max-width:700px){.recap-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.recap-grid{grid-template-columns:1fr;}}
+.recap-item{border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--panel); font-family:var(--mono); font-size:12px; color:var(--muted);}
+.recap-item b{display:block; color:var(--text); font-size:13px; margin-bottom:4px;}
+
+/* ============ THREAT TERMINOLOGY ============ */
+.term-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:32px;}
+@media(max-width:820px){.term-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:480px){.term-grid{grid-template-columns:1fr;}}
+.term-card{
+  border:1px solid var(--line); border-radius:10px; padding:16px; background:var(--panel);
+  cursor:pointer; min-height:96px; position:relative; transition:border-color .2s ease, transform .15s ease;
+}
+.term-card:hover{transform:translateY(-2px); border-color:var(--muted2);}
+.term-card .tnum{font-family:var(--mono); font-size:10px; color:var(--muted2);}
+.term-card h4{font-family:var(--mono); font-size:14.5px; margin-top:8px;}
+.term-card p.tshort{font-size:12.5px; color:var(--muted); margin-top:6px;}
+.term-card .texpand{max-height:0; overflow:hidden; transition:max-height .35s ease; font-size:12.5px; color:var(--muted);}
+.term-card.open .texpand{max-height:400px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+.term-card .texample{font-family:var(--mono); font-size:11.5px; color:var(--muted2); margin-top:8px; display:block;}
+
+/* attack chain */
+.chain-wrap{margin-top:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:26px 20px;}
+.chain-title{font-family:var(--mono); font-size:11px; color:var(--muted2); text-transform:uppercase; letter-spacing:.08em; margin-bottom:18px;}
+.chain-row{display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:6px;}
+.chain-node{
+  flex:1; min-width:126px; text-align:center; padding:14px 10px; border:1px solid var(--line); border-radius:8px;
+  cursor:pointer; background:var(--panel2); transition:all .18s ease; position:relative;
+}
+.chain-node:hover{border-color:var(--confid);}
+.chain-node.active{border-color:var(--confid); background:var(--confid-dim);}
+.chain-node .cicon{font-family:var(--mono); font-size:18px;}
+.chain-node .clabel{font-family:var(--mono); font-size:11px; margin-top:6px; color:var(--text);}
+.chain-arrow{display:flex; align-items:center; justify-content:center; color:var(--muted2); font-size:16px; padding:0 8px; flex-shrink:0;}
+.chain-detail{margin-top:20px; border-top:1px dashed var(--line); padding-top:16px; font-size:13.5px; color:var(--muted); min-height:50px;}
+.chain-detail b{color:var(--text);}
+
+/* risk matrix */
+.risk-wrap{margin-top:40px; align-items:start;}
+@media(max-width:760px){.risk-wrap{grid-template-columns:1fr;}}
+.risk-matrix-box{border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:20px;}
+.matrix-title{font-family:var(--mono); font-size:11px; color:var(--muted2); text-transform:uppercase; margin-bottom:14px;}
+.matrix-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:4px;}
+.matrix-cell{
+  aspect-ratio:1; border-radius:4px; cursor:pointer; opacity:.85; transition:all .15s ease;
+  display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:rgba(0,0,0,.55);
+}
+.matrix-cell:hover{opacity:1; transform:scale(1.06);}
+.matrix-cell.selected{outline:2px solid #fff; opacity:1;}
+.matrix-axis-x, .matrix-axis-y{font-family:var(--mono); font-size:10px; color:var(--muted2); text-align:center;}
+.matrix-axis-y{writing-mode:vertical-rl; transform:rotate(180deg); text-align:center;}
+.matrix-layout{display:grid; grid-template-columns:20px 1fr; grid-template-rows:1fr 20px;}
+.matrix-cells-area{grid-column:2; grid-row:1;}
+.matrix-y-label{grid-column:1; grid-row:1;}
+.matrix-x-label{grid-column:2; grid-row:2; padding-top:6px;}
+
+.risk-detail{border:1px solid var(--line); border-radius:10px; padding:24px; background:var(--panel); min-height:280px;}
+.risk-badge{font-family:var(--mono); font-size:11px; padding:4px 12px; border-radius:20px; display:inline-block;}
+.risk-formula{font-family:var(--mono); font-size:15px; margin-top:16px; padding:14px; background:var(--panel2); border-radius:8px; border:1px solid var(--line); text-align:center;}
+.risk-formula .rf-hi{color:var(--integ);}
+
+/* ---------- CIA triangle interactive ---------- */
+.triad-shell{display:grid; grid-template-columns:340px 1fr; gap:28px; margin-top:36px; align-items:start;}
+@media(max-width:760px){.triad-shell{grid-template-columns:1fr;}}
+.triad-svg-box{ border-radius:10px; background:var(--panel); padding:18px;}
+.vertex{cursor:pointer;}
+.vertex circle{transition:all .25s ease;}
+.vertex text{font-family:var(--mono); font-weight:700; font-size:13px; cursor:pointer;}
+.vertex.active circle.outer{filter:drop-shadow(0 0 0px currentColor);}
+.tri-edge{stroke:var(--line); stroke-width:1.5; fill:none;}
+
+.triad-detail{border:1px solid var(--line); border-radius:10px; padding:24px; background:var(--panel); min-height:420px;}
+.triad-detail .kicker{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;}
+.triad-detail h3{font-size:22px; margin-top:6px; color:var(--text);}
+.triad-detail .def{color:var(--muted); margin-top:8px; font-size:14.5px;}
+.triad-detail .real{margin-top:14px; font-size:13.5px; color:var(--muted); border-left:2px solid var(--line); padding-left:12px;}
+.pill-row{display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;}
+.pill{font-family:var(--mono); font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--line); color:var(--muted);}
+
+.scenario-box{margin-top:20px; border-top:1px dashed var(--line); padding-top:18px;}
+.scenario-box .scenario-title{font-family:var(--mono); font-size:12px; color:var(--muted2); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;}
+.scenario-anim{border:1px solid var(--line); border-radius:8px; padding:16px; background:var(--panel2); position:relative; min-height:150px;}
+.scenario-caption{margin-top:10px; font-size:13.5px; color:var(--muted);}
+.btn{
+  font-family:var(--mono); font-size:12px; background:var(--panel3); color:var(--text);
+  border:1px solid var(--line); padding:8px 14px; border-radius:6px; cursor:pointer;
+  transition:all .15s ease;
+}
+.btn:hover{border-color:var(--confid); color:var(--confid);}
+.btn.active{background:var(--confid-dim); border-color:var(--confid); color:var(--confid);}
+.btn-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+
+.switch-row{display:flex; align-items:center; gap:10px; margin-top:12px; font-family:var(--mono); font-size:12px; color:var(--muted);}
+.switch{width:42px; height:22px; border-radius:20px; background:var(--panel3); border:1px solid var(--line); position:relative; cursor:pointer; flex-shrink:0;}
+.switch .knob{position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:all .2s ease;}
+.switch.on{background:var(--confid-dim); border-color:var(--confid);}
+.switch.on .knob{left:22px; background:var(--confid);}
+
+/* ---------- extended goals cards ---------- */
+.ext-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:32px;}
+@media(max-width:760px){.ext-grid{grid-template-columns:1fr;}}
+.ext-card{
+  border:1px solid var(--line); border-radius:10px; padding:20px; background:var(--panel);
+  cursor:pointer; transition:border-color .2s ease, transform .2s ease;
+}
+.ext-card:hover{border-color:var(--muted2); transform:translateY(-2px);}
+.ext-card .icon-row{display:flex; justify-content:space-between; align-items:center;}
+.ext-card .num{font-family:var(--mono); font-size:11px; color:var(--muted2);}
+.ext-card h4{font-family:var(--mono); font-size:16px; margin-top:12px; color:var(--text);}
+.ext-card p.short{font-size:13.5px; color:var(--muted); margin-top:8px;}
+.ext-card .expand{max-height:0; overflow:hidden; transition:max-height .35s ease; font-size:13.5px; color:var(--muted);}
+.ext-card.open .expand{max-height:700px; margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+.ext-card .caret{font-family:var(--mono); color:var(--muted2); transition:transform .25s ease; font-size:12px;}
+.ext-card.open .caret{transform:rotate(45deg); color:var(--confid);}
+
+.sig-stage{border:1px solid var(--line); border-radius:8px; background:var(--panel2); padding:14px; margin-top:10px;}
+.sig-doc{font-family:var(--mono); font-size:11px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; padding:10px; background:var(--panel);}
+.sig-hash{color:var(--integ); font-family:var(--mono); font-size:11px; margin-top:8px; word-break:break-all;}
+
+/* ---------- AAA pipeline ---------- */
+.aaa-pipeline{display:flex; gap:0; margin-top:36px; border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+@media(max-width:760px){.aaa-pipeline{flex-direction:column;}}
+.aaa-step{
+  flex:1; padding:22px 18px; background:var(--panel); border-right:1px solid var(--line); cursor:pointer;
+  position:relative; transition:background .2s ease;
+}
+.aaa-step:last-child{border-right:none;}
+@media(max-width:760px){.aaa-step{border-right:none; border-bottom:1px solid var(--line);}}
+.aaa-step.active{background:var(--panel3);}
+.aaa-step .step-idx{font-family:var(--mono); font-size:11px; color:var(--muted2);}
+.aaa-step h4{font-family:var(--mono); font-size:15px; margin-top:8px;}
+.aaa-step p{font-size:12.5px; color:var(--muted); margin-top:6px;}
+.aaa-step .q{font-family:var(--mono); font-size:11px; color:var(--muted2); margin-top:10px; font-style:normal;}
+.aaa-arrow{position:absolute; right:-11px; top:50%; transform:translateY(-50%); z-index:5; color:var(--muted2); font-size:14px;}
+@media(max-width:760px){.aaa-arrow{display:none;}}
+
+.aaa-console{
+  border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px;
+  background:#0D1218; padding:20px; font-family:var(--mono); font-size:12.5px; color:var(--muted);
+  min-height:120px;
+}
+.aaa-console .line{margin-bottom:6px; opacity:0; animation:typeIn .3s ease forwards;}
+@keyframes typeIn{ to{opacity:1;} }
+.aaa-console .ok{color:var(--avail);}
+.aaa-console .warn{color:var(--integ);}
+.aaa-console .deny{color:var(--trudy);}
+.aaa-console .sys{color:var(--muted2);}
+
+/* auth factors */
+.factor-row{display:flex; gap:12px; margin-top:32px; flex-wrap:wrap;}
+.factor-card{
+  flex:1; min-width:190px; border:1px solid var(--line); border-radius:10px; padding:16px; background:var(--panel);
+  cursor:pointer; transition:all .18s ease;
+}
+.factor-card.on{border-color:var(--confid); background:var(--confid-dim);}
+.factor-card .flabel{font-family:var(--mono); font-size:11px; color:var(--muted2); text-transform:uppercase;}
+.factor-card h5{font-family:var(--mono); font-size:14px; margin-top:6px; color:var(--text);}
+.factor-card p{font-size:12px; color:var(--muted); margin-top:6px;}
+.strength-meter{margin-top:20px; border:1px solid var(--line); border-radius:8px; padding:16px; background:var(--panel2);}
+.strength-bar-track{height:8px; border-radius:6px; background:var(--panel3); overflow:hidden; margin-top:10px;}
+.strength-bar-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--trudy),var(--integ),var(--avail)); transition:width .3s ease;}
+.strength-label{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px;}
+
+/* authorization models tabs */
+.model-tabs{display:flex; gap:8px; margin-top:36px; flex-wrap:wrap;}
+.model-tab{
+  font-family:var(--mono); font-size:12px; padding:8px 14px; border-radius:6px; border:1px solid var(--line);
+  cursor:pointer; color:var(--muted); transition:all .15s ease;
+}
+.model-tab.active{border-color:var(--bob); color:var(--bob); background:rgba(95,166,255,.08);}
+.model-panel{border:1px solid var(--line); border-radius:10px; padding:22px; background:var(--panel); margin-top:14px; min-height:120px;}
+.model-panel h4{font-family:var(--mono); font-size:15px; color:var(--text);}
+.model-panel p{margin-top:8px; font-size:13.5px;}
+
+/* ---------- IAM lifecycle ---------- */
+.iam-wheel{display:flex; gap:24px; margin-top:36px; align-items:flex-start; flex-wrap:wrap;}
+.iam-ring{flex-shrink:0;}
+.iam-panel{flex:1; min-width:280px; border:1px solid var(--line); border-radius:10px; padding:22px; background:var(--panel); min-height:220px;}
+.iam-panel .kicker{font-family:var(--mono); font-size:11px; color:var(--muted2); letter-spacing:.1em; text-transform:uppercase;}
+.iam-panel h4{font-size:19px; margin-top:6px; font-family:var(--mono);}
+.iam-panel p{margin-top:10px; font-size:14px; color:var(--muted);}
+.iam-node{cursor:pointer;}
+.iam-node text{font-family:var(--mono); font-size:10px; fill:var(--muted); transition:fill .2s ease;}
+.iam-node.active text{fill:var(--confid); font-weight:700;}
+.iam-node circle{transition:all .2s ease;}
+.iam-benefits{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:24px;}
+@media(max-width:700px){.iam-benefits{grid-template-columns:1fr;}}
+.iam-benefit{border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--panel);}
+.iam-benefit b{font-family:var(--mono); font-size:12.5px; color:var(--confid); display:block; margin-bottom:6px;}
+.iam-benefit span{font-size:12.5px; color:var(--muted);}
+
+/* ---------- comparison table ---------- */
+table{width:100%; border-collapse:collapse; margin-top:30px; font-size:13.5px;}
+th,td{border:1px solid var(--line); padding:12px 14px; text-align:left; vertical-align:top;}
+th{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:var(--panel2);}
+td{color:#C7D0D9;}
+tr:hover td{background:var(--panel2);}
+.dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px;}
+
+/* ---------- quiz ---------- */
+.quiz-card{border:1px solid var(--line); border-radius:10px; padding:24px; background:var(--panel); margin-top:30px;}
+.quiz-q{margin-bottom:22px;}
+.quiz-q .qtext{font-size:15px; color:var(--text); margin-bottom:10px; font-family:var(--sans); font-weight:600;}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  border:1px solid var(--line); border-radius:6px; padding:10px 14px; font-size:13.5px; cursor:pointer;
+  transition:all .15s ease; color:var(--muted);
+}
+.quiz-opt:hover{border-color:var(--muted2);}
+.quiz-opt.correct{border-color:var(--avail); background:var(--avail-dim); color:var(--avail);}
+.quiz-opt.wrong{border-color:var(--trudy); background:var(--trudy-dim); color:var(--trudy);}
+.quiz-opt.disabled{pointer-events:none;}
+.quiz-feedback{font-family:var(--mono); font-size:12px; margin-top:8px; min-height:16px;}
+.quiz-score{font-family:var(--mono); font-size:13px; color:var(--muted); margin-top:6px; text-align:right;}
+
+footer{padding:40px 0 70px; text-align:center; color:var(--muted2); font-family:var(--mono); font-size:11.5px;}
+
+@media(prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="brand"><b>SE 5101</b> Computer &amp; Network Security</span>
+    <div class="nav">
+      <a href="#terms">Terminology</a>
+      <a href="#cia">CIA</a>
+      <a href="#extended">A/N/A</a>
+      <a href="#aaa">AAA</a>
+      <a href="#iam">IAM</a>
+      <a href="#quiz">Quiz</a>
+    </div>
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+</div>
+
+<!-- ============================================================ HERO ============================================================ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow"><span class="tag">0x00</span> Lecture Note</div>
+        <h1>Basic Security Concepts<br><span class="accent">&amp; the CIA Triad</span></h1>
+        <p class="sub">Every control, policy and attack in this course traces back to a small set of ideas.
+        This note builds them up from the ground up — risk vocabulary first, then the CIA triad, then the
+        properties and access-control machinery built on top of it — with
+        <b style="color:var(--alice)">Alice</b>, <b style="color:var(--bob)">Bob</b> and
+        <b style="color:var(--trudy)">Trudy</b> acting out each scenario so you see it, not just read it.</p>
+      </div>
+     
+    </div>
+
+    <div class="stage">
+      <div class="stage-label">fig 0.1 — channel under observation</div>
+      <div class="stage-label2" id="clockLabel">t = 0s</div>
+      <svg viewBox="0 0 860 220" width="100%" height="220" id="heroSvg">
+        <path id="pathAB" class="wire" d="M 130,110 C 320,60 540,60 730,110" />
+        <g transform="translate(90,110)">
+          <circle r="26" fill="rgba(164,151,255,.12)" stroke="var(--alice)" stroke-width="1.5"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--alice)">A</text>
+        </g>
+        <text x="90" y="160" text-anchor="middle" class="node-sub">ALICE · sender</text>
+        <g transform="translate(770,110)">
+          <circle r="26" fill="rgba(95,166,255,.12)" stroke="var(--bob)" stroke-width="1.5"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--bob)">B</text>
+        </g>
+        <text x="770" y="160" text-anchor="middle" class="node-sub">BOB · receiver</text>
+        <g transform="translate(430,195)">
+          <circle r="20" fill="rgba(234,92,104,.12)" stroke="var(--trudy)" stroke-width="1.5" class="pulse" style="transform-origin:430px 195px"/>
+          <text x="0" y="5" text-anchor="middle" class="node-label" fill="var(--trudy)" font-size="11">T</text>
+        </g>
+        <text x="430" y="216" text-anchor="middle" class="node-sub">TRUDY · adversary on the wire</text>
+        <circle r="5" fill="var(--confid)" class="packet">
+          <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+            <mpath href="#pathAB"/>
+          </animateMotion>
+        </circle>
+      </svg>
+    </div>
+
+    <div class="cast">
+      <div class="cast-card alice"><div class="cast-dot">A</div><div><div class="name">Alice</div><div class="role">Legitimate sender. Wants her message delivered privately, intact, and traceably to her.</div></div></div>
+      <div class="cast-card bob"><div class="cast-dot">B</div><div><div class="name">Bob</div><div class="role">Legitimate receiver. Needs to trust what he gets, and that the service stays up.</div></div></div>
+      <div class="cast-card trudy"><div class="cast-dot">T</div><div><div class="name">Trudy</div><div class="role">The classic textbook <em>intruder</em> — she reads, alters, blocks, or forges traffic on the wire.</div></div></div>
+    </div>
+
+    <div class="toc">
+      <a href="#terms">0x02 Threat terminology</a>
+      <a href="#cia">0x03 CIA triad</a>
+      <a href="#extended">0x04 Accountability / non-repudiation / authenticity</a>
+      <a href="#aaa">0x05 AAA</a>
+      <a href="#iam">0x06 IAM</a>
+      <a href="#summary">0x07 Reference table</a>
+      <a href="#quiz">0x08 Quiz</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ WHAT IS SECURITY ============================================================ -->
+<section class="section" id="intro">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x01</span> Framing</div>
+    <h2>What are we actually protecting?</h2>
+    <p class="lede">"Security" is not one property — it's a bundle of guarantees a system makes about information and access. Computer &amp; network security exists because Alice and Bob are not alone on the wire: Trudy is always a possible participant. Before we can define <em>what</em> is broken when Trudy succeeds, we need the vocabulary security professionals use to talk about <em>how</em> and <em>how badly</em> it can be broken. That's section 0x02.</p>
+    <div class="recap-grid" style="grid-template-columns:repeat(3,1fr); margin-top:36px;">
+      <div class="recap-item" style="border-color:var(--confid);"><b style="color:var(--confid)">Goal properties</b>CIA + authenticity, non-repudiation, accountability — <em>what</em> we protect.</div>
+      <div class="recap-item" style="border-color:var(--integ);"><b style="color:var(--integ)">Risk vocabulary</b>Asset, vulnerability, threat, exploit, risk — <em>how</em> we reason about danger.</div>
+      <div class="recap-item" style="border-color:var(--avail);"><b style="color:var(--avail)">Access machinery</b>AAA + IAM — <em>the mechanism</em> that enforces the goals day to day.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ THREAT TERMINOLOGY ============================================================ -->
+<section class="section" id="terms">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x02</span> Risk Vocabulary</div>
+    <h2>Threat Terminology — Asset, Vulnerability, Threat, Risk</h2>
+    <p class="lede">These eight words get used loosely in everyday speech but mean specific, different things in security. Getting them right matters: a <em>vulnerability</em> without a <em>threat</em> capable of reaching it is not much of a <em>risk</em>. Click a card to expand its definition and a worked Alice/Bob/Trudy example.</p>
+
+    <div class="term-grid" id="termGrid"></div>
+
+    <div class="chain-wrap">
+      <div class="chain-title">fig 2.1 — anatomy of an incident (click each link)</div>
+      <div class="chain-row" id="chainRow"></div>
+      <div class="chain-detail" id="chainDetail"></div>
+    </div>
+
+    <div class="risk-wrap">
+      <div class="risk-detail" id="riskDetail">
+        <div class="kicker" style="font-family:var(--mono); font-size:11px; color:var(--muted2); text-transform:uppercase;">RISK MODEL</div>
+        <h3 style="font-size:20px; margin-top:6px;">Risk = Likelihood × Impact</h3>
+        <p class="def" style="color:var(--muted); margin-top:8px; font-size:14.5px;">Risk is not the same as threat, and it isn't the same as vulnerability. It's the <em>combination</em> — how probable an exploit is, multiplied by how bad it would be if it happened. Click any cell in the grid to load a worked scenario.</p>
+        <div class="risk-formula">Risk = <span class="rf-hi">Likelihood</span> × <span class="rf-hi">Impact</span></div>
+        <p style="margin-top:14px; font-size:13.5px; color:var(--muted);">Security teams use this to <b style="color:var(--text)">prioritize</b>: a critical-risk item (red, top-right) gets patched today; a low-risk item (green, bottom-left) can wait for the next maintenance window. Controls work by pulling a cell <em>down</em> (reduce likelihood) or <em>left</em> (reduce impact).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CIA TRIAD ============================================================ -->
+<section class="section" id="cia">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x03</span> Core Model</div>
+    <h2>The CIA Triad</h2>
+    <p class="lede">Three vertices, three failure modes. In risk-vocabulary terms: each property names an <em>asset attribute</em> that a <em>threat</em> can damage by exploiting a <em>vulnerability</em>. Click a corner of the triangle — the panel updates with the definition, a real-world example, and a live scenario you can run.</p>
+
+    <div class="triad-shell">
+      <div class="triad-svg-box">
+        <svg viewBox="0 0 300 280" width="100%" height="280">
+          <path class="tri-edge" d="M150,30 L270,230 L30,230 Z"/>
+          <g class="vertex active" data-key="confid" transform="translate(150,30)">
+            <circle class="outer" r="24" fill="var(--confid-dim)" stroke="var(--confid)" stroke-width="1" style="color:var(--confid)"/>
+            <text y="5" text-anchor="middle" fill="var(--confid)">C</text>
+          </g>
+          <g class="vertex" data-key="integ" transform="translate(270,230)">
+            <circle class="outer" r="24" fill="var(--panel2)" stroke="var(--line)" stroke-width="1" style="color:var(--integ)"/>
+            <text y="5" text-anchor="middle" fill="var(--muted)">I</text>
+          </g>
+          <g class="vertex" data-key="avail" transform="translate(30,230)">
+            <circle class="outer" r="24" fill="var(--panel2)" stroke="var(--line)" stroke-width="1" style="color:var(--avail)"/>
+            <text y="5" text-anchor="middle" fill="var(--muted)">A</text>
+          </g>
+        </svg>
+        <p class="key-hint" style="text-align:center;">Click C / I / A above</p>
+      </div>
+      <div class="triad-detail" id="triadDetail"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ EXTENDED GOALS ============================================================ -->
+<section class="section" id="extended">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x04</span> Beyond CIA</div>
+    <h2>Accountability, Non-repudiation &amp; Authenticity</h2>
+    <p class="lede">CIA doesn't answer "who did this, and can they deny it?" These three properties close that gap — they're what let a security incident end in a courtroom instead of a shrug. Click a card to expand.</p>
+
+    <div class="ext-grid">
+      <div class="ext-card" data-ext="authenticity">
+        <div class="icon-row"><span class="num">01</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--integ)">Authenticity</h4>
+        <p class="short">The guarantee that data, a message, or an identity really is what/who it claims to be.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Authenticity verifies the <em>origin</em> of information — that a message from "Alice" was actually created by Alice, and a server claiming to be "bob-bank.com" really is.</p>
+          <p><b>Scenario:</b> Trudy sends Bob an email that looks like it's from Alice ("Bob, wire the funds to this account"). Without an authenticity check (e.g. a digital signature or a verified certificate), Bob has no way to know Alice never sent it. This is the vulnerability behind phishing and email spoofing.</p>
+          <p><b>Typical controls:</b> digital signatures, MACs, TLS certificates, mutual authentication, DKIM/SPF/DMARC for email.</p>
+        </div>
+      </div>
+
+      <div class="ext-card" data-ext="nonrepud">
+        <div class="icon-row"><span class="num">02</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--alice)">Non-repudiation</h4>
+        <p class="short">Alice cannot later deny she sent the message; Bob cannot deny he received it.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Provides undeniable proof of origin (and optionally receipt), so a party can't successfully disown an action after the fact. It depends on authenticity plus a durable, tamper-evident record.</p>
+          <p><b>Scenario:</b> Alice digitally signs a purchase order to Bob's store. Later she tries to claim "I never ordered that." Because the signature was produced with Alice's private key — something only she holds — Bob (and a third party / judge) can cryptographically prove otherwise.</p>
+          <div class="sig-stage">
+            <div class="sig-doc" id="sigDoc">"Alice authorizes transfer of $500 to Bob."</div>
+            <div class="sig-hash" id="sigHash">signature: (not signed yet)</div>
+            <div class="btn-row"><button class="btn" id="signBtn">Sign with Alice's private key</button><button class="btn" id="repudBtn">Alice tries to deny it</button></div>
+            <div class="scenario-caption" id="repudResult"></div>
+          </div>
+          <p style="margin-top:12px;"><b>Typical controls:</b> digital signatures + trusted timestamps, audit logs, certified delivery receipts.</p>
+        </div>
+      </div>
+
+      <div class="ext-card" data-ext="account">
+        <div class="icon-row"><span class="num">03</span><span class="caret">＋</span></div>
+        <h4 style="color:var(--avail)">Accountability</h4>
+        <p class="short">Every action can be traced back to the entity that performed it.</p>
+        <div class="expand">
+          <p><b>Definition:</b> Accountability = identification + logging + auditing, tying actions to accounts so misuse can be investigated after the fact. It's what turns a security control into a deterrent.</p>
+          <p><b>Scenario:</b> Trudy compromises a low-privilege account and deletes a file. Because the system logged <code>who / what / when / from where</code> for every action, the audit trail lets the security team reconstruct exactly what Trudy did — even though she was never caught in the act.</p>
+          <p><b>Typical controls:</b> audit logging, SIEM, unique user IDs (no shared logins), tamper-evident logs, video/badge logs for physical access.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ AAA ============================================================ -->
+<section class="section" id="aaa">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x05</span> Access Control Model</div>
+    <h2>Authentication → Authorization → Accounting (AAA)</h2>
+    <p class="lede">Before Bob's system trusts anything Alice does, it runs her through this pipeline. Click each stage to see what question it answers and to step through a live login console.</p>
+
+    <div class="aaa-pipeline" id="aaaPipeline">
+      <div class="aaa-step active" data-step="1">
+        <div class="step-idx">STEP 1</div>
+        <h4 style="color:var(--confid)">Identification</h4>
+        <p>Alice claims an identity: "I am alice@corp".</p>
+        <div class="q">Q: who are you claiming to be?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="2">
+        <div class="step-idx">STEP 2</div>
+        <h4 style="color:var(--integ)">Authentication</h4>
+        <p>Alice proves it — password, OTP token, fingerprint.</p>
+        <div class="q">Q: can you prove that?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="3">
+        <div class="step-idx">STEP 3</div>
+        <h4 style="color:var(--avail)">Authorization</h4>
+        <p>The system checks Alice's permissions against the resource she's requesting.</p>
+        <div class="q">Q: are you allowed to do this?</div>
+        <div class="aaa-arrow">›</div>
+      </div>
+      <div class="aaa-step" data-step="4">
+        <div class="step-idx">STEP 4</div>
+        <h4 style="color:var(--alice)">Accounting</h4>
+        <p>The action, timestamp, and outcome are logged — feeding Accountability.</p>
+        <div class="q">Q: what did you just do?</div>
+      </div>
+    </div>
+
+    <div class="aaa-console" id="aaaConsole"></div>
+    <div class="btn-row">
+      <button class="btn" id="runAliceBtn">▶ Run as Alice (valid credentials)</button>
+      <button class="btn" id="runTrudyBtn">▶ Run as Trudy (stolen password, wrong role)</button>
+    </div>
+
+    <p style="margin-top:26px; font-size:14px; color:var(--muted); max-width:700px;">
+    Note the distinction: <b style="color:var(--integ)">authentication</b> asks "who are you, prove it," while
+    <b style="color:var(--avail)">authorization</b> asks "now that I know who you are, what are you allowed to touch."
+    Trudy can pass step 2 (e.g. with a stolen password) and still fail step 3 if she lacks the right role.
+    </p>
+
+    <h3 style="font-size:18px; margin-top:56px;">Authentication factors</h3>
+    <p class="lede" style="margin-top:8px;">Authentication is only as strong as the factors combined. Toggle the three classic factor types and watch the strength meter.</p>
+    <div class="factor-row" id="factorRow">
+      <div class="factor-card" data-factor="know">
+        <div class="flabel">Something you KNOW</div>
+        <h5>Password / PIN</h5>
+        <p>Easiest to steal — phishing, keyloggers, reuse.</p>
+      </div>
+      <div class="factor-card" data-factor="have">
+        <div class="flabel">Something you HAVE</div>
+        <h5>OTP token / phone / smart card</h5>
+        <p>Requires physical possession — much harder to remote-steal.</p>
+      </div>
+      <div class="factor-card" data-factor="are">
+        <div class="flabel">Something you ARE</div>
+        <h5>Fingerprint / face / iris</h5>
+        <p>Biometric — hard to fake, but can't be "reset" if leaked.</p>
+      </div>
+    </div>
+    <div class="strength-meter">
+      <div style="display:flex; justify-content:space-between;">
+        <span class="strength-label" id="strengthLabel">0 factors selected — no authentication</span>
+        <span class="strength-label" id="strengthPct">0%</span>
+      </div>
+      <div class="strength-bar-track"><div class="strength-bar-fill" id="strengthFill"></div></div>
+    </div>
+
+    <h3 style="font-size:18px; margin-top:56px;">Authorization models</h3>
+    <p class="lede" style="margin-top:8px;">Once Alice is authenticated, <em>how</em> does the system decide what she can touch? These are the four classic models.</p>
+    <div class="model-tabs" id="modelTabs"></div>
+    <div class="model-panel" id="modelPanel"></div>
+  </div>
+</section>
+
+<!-- ============================================================ IAM ============================================================ -->
+<section class="section" id="iam">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x06</span> Operational Framework</div>
+    <h2>Identity &amp; Access Management (IAM)</h2>
+    <p class="lede">IAM is the organizational system — policies, processes, and tooling — that makes AAA work at scale across an entire company, not just one login. It governs Alice's entire lifecycle as a digital identity, from the day she's hired to the day she leaves. Click a stage on the ring.</p>
+
+    <div class="iam-wheel">
+      <div class="iam-ring">
+        <svg viewBox="0 0 260 260" width="260" height="260" id="iamSvg"></svg>
+      </div>
+      <div class="iam-panel" id="iamPanel"></div>
+    </div>
+
+    <div class="iam-benefits">
+      <div class="iam-benefit"><b>Least privilege, enforced</b><span>IAM makes "only what's needed, nothing more" an operational default rather than a hope.</span></div>
+      <div class="iam-benefit"><b>Single source of truth</b><span>One identity system (often with SSO) instead of dozens of disconnected logins Trudy could target.</span></div>
+      <div class="iam-benefit"><b>Fast, complete offboarding</b><span>When Alice leaves, IAM revokes every system at once — no orphaned accounts left for Trudy to find later.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ COMPARISON TABLE ============================================================ -->
+<section class="section" id="summary">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x07</span> Reference</div>
+    <h2>Concept Map — everything above, one table</h2>
+    <p class="lede">Use this as your revision sheet.</p>
+    <table>
+      <thead><tr><th>Term</th><th>Category</th><th>Answers / Means</th><th>Example (Alice/Bob/Trudy)</th></tr></thead>
+      <tbody>
+        <tr><td><b>Asset</b></td><td>Risk vocabulary</td><td>Anything of value worth protecting</td><td>Bob's customer database</td></tr>
+        <tr><td><b>Vulnerability</b></td><td>Risk vocabulary</td><td>A weakness that can be exploited</td><td>Bob's server runs unpatched software</td></tr>
+        <tr><td><b>Threat</b></td><td>Risk vocabulary</td><td>A potential cause of harm</td><td>Trudy, or a worm that targets that flaw</td></tr>
+        <tr><td><b>Exploit</b></td><td>Risk vocabulary</td><td>The specific technique used to abuse a vulnerability</td><td>Trudy's script for that unpatched flaw</td></tr>
+        <tr><td><b>Risk</b></td><td>Risk vocabulary</td><td>Likelihood × impact of a threat realizing</td><td>High — public server, high-value data</td></tr>
+        <tr><td><span class="dot" style="background:var(--confid)"></span><b>Confidentiality</b></td><td>CIA</td><td>Who can read this?</td><td>Trudy eavesdrops on the channel</td></tr>
+        <tr><td><span class="dot" style="background:var(--integ)"></span><b>Integrity</b></td><td>CIA</td><td>Was this altered?</td><td>Trudy edits the amount in transit</td></tr>
+        <tr><td><span class="dot" style="background:var(--avail)"></span><b>Availability</b></td><td>CIA</td><td>Can I get to it when I need it?</td><td>Trudy floods Bob's server (DoS)</td></tr>
+        <tr><td><span class="dot" style="background:var(--integ)"></span><b>Authenticity</b></td><td>Extended goal</td><td>Is this really from who it claims?</td><td>Trudy spoofs an email from Alice</td></tr>
+        <tr><td><span class="dot" style="background:var(--alice)"></span><b>Non-repudiation</b></td><td>Extended goal</td><td>Can they deny doing this?</td><td>Alice's signed order can't be denied</td></tr>
+        <tr><td><span class="dot" style="background:var(--avail)"></span><b>Accountability</b></td><td>Extended goal</td><td>Who did what, and when?</td><td>Logs trace Trudy's actions post-breach</td></tr>
+        <tr><td><span class="dot" style="background:var(--confid)"></span><b>Authentication</b></td><td>AAA</td><td>Are you who you claim?</td><td>Alice proves it with password + MFA</td></tr>
+        <tr><td><span class="dot" style="background:var(--bob)"></span><b>Authorization</b></td><td>AAA</td><td>What are you allowed to do?</td><td>Alice can read payroll, not edit it</td></tr>
+        <tr><td><b>IAM</b></td><td>Framework</td><td>Manages identity across its whole lifecycle</td><td>Revokes Alice's access the day she leaves</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ QUIZ ============================================================ -->
+<section class="section" id="quiz">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x08</span> Knowledge Check</div>
+    <h2>Quick self-test</h2>
+    <p class="lede">Scenarios covering both the risk vocabulary and the CIA/AAA goals. Pick the best answer for each.</p>
+    <div class="quiz-card" id="quizCard"></div>
+  </div>
+</section>
+
+<!-- ============================================================ RECAP ============================================================ -->
+<section class="section" id="recap">
+  <div class="wrap">
+    <div class="eyebrow"><span class="tag">0x09</span> Recap</div>
+    <h2>Take this away</h2>
+    <div class="recap-grid">
+      <div class="recap-item"><b>Risk vocabulary</b>Asset, vulnerability, threat, exploit, risk — how we reason about danger before it happens.</div>
+      <div class="recap-item"><b>CIA</b>Confidentiality, Integrity, Availability — the three base guarantees on an asset.</div>
+      <div class="recap-item"><b>+ 3 more</b>Authenticity, Non-repudiation, Accountability — close the "who / can-they-deny-it" gap.</div>
+      <div class="recap-item"><b>AAA</b>Authentication → Authorization → Accounting — how access is actually controlled.</div>
+      <div class="recap-item"><b>IAM</b>The organizational machine that runs AAA + accountability at scale, across an identity's whole lifecycle.</div>
+      <div class="recap-item"><b>Alice, Bob &amp; Trudy</b>Legitimate parties whose guarantees we protect — and the generic adversary every control above exists because of.</div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+/* ---------------- progress bar ---------------- */
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement;
+  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+let t=0;
+setInterval(()=>{ t += 1; document.getElementById('clockLabel').textContent = 't = ' + (t%10) + 's'; }, 1000);
+
+/* ================= THREAT TERMINOLOGY ================= */
+const terms = [
+  {k:'asset', title:'Asset', short:'Anything of value worth protecting.', ex:'Bob\'s customer database, his server, his reputation, even Alice\'s login session.',
+   detail:'An asset is whatever has value to the organization or individual: data, hardware, software, a service, a person\'s time, or reputation. Security exists to protect assets — everything else in this vocabulary describes ways an asset can be put at risk.'},
+  {k:'vuln', title:'Vulnerability', short:'A weakness that can be exploited.', ex:'Bob\'s web server is running software with a known, unpatched flaw.',
+   detail:'A vulnerability is a flaw or gap in a system\'s design, implementation, or configuration — a weak password policy, an open port, unvalidated input, or an untrained employee. A vulnerability alone causes no harm; it needs a threat to act on it.'},
+  {k:'threat', title:'Threat', short:'A potential cause of an unwanted incident.', ex:'Trudy is a threat. So is a worm, a flood, or a careless insider.',
+   detail:'A threat is anything with the potential to exploit a vulnerability and cause harm — a person (Trudy), a piece of malware, a natural disaster, or even an honest mistake. Threats are outside the system\'s control; vulnerabilities are (mostly) inside it.'},
+  {k:'actor', title:'Threat Actor', short:'The entity carrying out the threat.', ex:'Trudy herself — or the criminal group / insider behind an attack.',
+   detail:'The threat actor (or threat agent) is the specific person or group behind a threat: a lone hacker, an organized crime group, a nation-state, or a disgruntled insider. Distinguishing actors matters because their motives and capabilities differ.'},
+  {k:'exploit', title:'Exploit', short:'The specific technique used to abuse a vulnerability.', ex:'Trudy\'s script that targets Bob\'s unpatched server flaw.',
+   detail:'An exploit is the concrete method, code, or technique that takes advantage of a vulnerability — a piece of malware, a crafted packet, a social-engineering script. "Exploit" is often used as both a noun (the tool) and a verb (the act of using it).'},
+  {k:'attack', title:'Attack', short:'The realized attempt to exploit a vulnerability.', ex:'Trudy actually runs the exploit against Bob\'s server tonight.',
+   detail:'An attack is a threat put into action — the moment a threat actor actually attempts to exploit a vulnerability against an asset. Not every threat becomes an attack, and not every attack succeeds.'},
+  {k:'risk', title:'Risk', short:'The potential for loss when a threat meets a vulnerability.', ex:'High risk: a public, unpatched, high-value server.',
+   detail:'Risk is the combination of how likely a threat is to exploit a vulnerability, and how severe the consequences would be if it did: Risk = Likelihood × Impact. It\'s the number security teams actually use to prioritize what gets fixed first.'},
+  {k:'control', title:'Control / Countermeasure', short:'A safeguard that reduces risk.', ex:'Patching Bob\'s server removes the vulnerability entirely.',
+   detail:'A control (or countermeasure / safeguard) is anything that reduces risk — by removing a vulnerability (patching), reducing likelihood (firewalls, MFA), or reducing impact (backups, segmentation). Risk that remains after controls are applied is called residual risk.'}
+];
+const termGrid = document.getElementById('termGrid');
+terms.forEach((tm,i)=>{
+  const card = document.createElement('div');
+  card.className='term-card';
+  card.innerHTML = `<div class="tnum">0${i+1}</div><h4>${tm.title}</h4><p class="tshort">${tm.short}</p>
+    <div class="texpand"><p style="margin:0;">${tm.detail}</p><span class="texample">e.g. — ${tm.ex}</span></div>`;
+  card.addEventListener('click', ()=>card.classList.toggle('open'));
+  termGrid.appendChild(card);
+});
+
+/* attack chain */
+const chain = [
+  {icon:'◆', label:'Asset', detail:'<b>Asset:</b> Bob\'s customer database — the thing with value that everything downstream is trying to protect.'},
+  {icon:'△', label:'Vulnerability', detail:'<b>Vulnerability:</b> The database server has a known, unpatched SQL injection flaw in its login form.'},
+  {icon:'☠', label:'Threat Actor', detail:'<b>Threat actor:</b> Trudy, who has both motive (financial gain) and capability (SQLi tooling) to go after it.'},
+  {icon:'⚡', label:'Exploit', detail:'<b>Exploit:</b> Trudy crafts a malicious SQL payload that specifically targets the unpatched login form.'},
+  {icon:'▶', label:'Attack', detail:'<b>Attack:</b> Trudy submits the payload against Bob\'s live server — the threat is now in action.'},
+  {icon:'✕', label:'Impact / Risk', detail:'<b>Impact realized:</b> Confidentiality is broken — Trudy dumps the customer table. This is what "risk" was trying to measure in advance.'},
+  {icon:'✓', label:'Control', detail:'<b>Control (after the fact / to prevent recurrence):</b> Patch the flaw, add input validation and a WAF, rotate credentials, and log the incident for accountability.'}
+];
+const chainRow = document.getElementById('chainRow');
+chain.forEach((c,i)=>{
+  const node = document.createElement('div');
+  node.className='chain-node' + (i===0?' active':'');
+  node.dataset.i=i;
+  node.innerHTML = `<div class="cicon">${c.icon}</div><div class="clabel">${c.label}</div>`;
+  node.addEventListener('click', ()=>{
+    document.querySelectorAll('.chain-node').forEach(n=>n.classList.remove('active'));
+    node.classList.add('active');
+    document.getElementById('chainDetail').innerHTML = c.detail;
+  });
+  chainRow.appendChild(node);
+  if(i<chain.length-1){
+    const arrow = document.createElement('div');
+    arrow.className='chain-arrow';
+    arrow.textContent='→';
+    chainRow.appendChild(arrow);
+  }
+});
+document.getElementById('chainDetail').innerHTML = chain[0].detail;
+
+/* ================= CIA TRIAD ================= */
+const triadData = {
+  confid:{
+    color:'var(--confid)', title:'Confidentiality',
+    def:'Information is disclosed only to those authorized to see it. Confidentiality fails the moment an unauthorized party reads data — even if nothing is changed or blocked.',
+    real:'Real-world: the 2013 Yahoo breach exposed 3 billion accounts\' personal data — a pure confidentiality failure; nothing was altered or taken offline, it was simply read by people who shouldn\'t have had access.',
+    pills:['Encryption','Access control','Need-to-know'],
+    scenario:'encrypt'
+  },
+  integ:{
+    color:'var(--integ)', title:'Integrity',
+    def:'Information is accurate, complete, and unmodified except by authorized action. Integrity fails when data is altered — in transit, at rest, or in processing — without detection.',
+    real:'Real-world: attackers altering bank transfer amounts in transit, or tampering with firmware updates, are integrity attacks — the channel may still be "available," and the attacker may not even read the content, they just change it.',
+    pills:['Hashing','Checksums','Digital signatures','Version control'],
+    scenario:'tamper'
+  },
+  avail:{
+    color:'var(--avail)', title:'Availability',
+    def:'Authorized users can access information and systems whenever they legitimately need to. Availability fails when a service is knocked offline or made too slow to use.',
+    real:'Real-world: large DDoS attacks (like the 2016 Dyn/Mirai botnet attack) took down major websites for hours — data wasn\'t read or changed, it was simply made unreachable.',
+    pills:['Redundancy','Backups','Rate limiting','DDoS mitigation'],
+    scenario:'dos'
+  }
+};
+
+function scenarioHTML(key){
+  if(key==='encrypt'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Confidentiality</div>
+      <div class="scenario-anim">
+        <svg viewBox="0 0 500 90" width="100%" height="90">
+          <text x="10" y="20" class="node-sub" fill="var(--alice)">ALICE</text>
+          <text x="440" y="20" class="node-sub" fill="var(--bob)">BOB</text>
+          <text x="220" y="80" class="node-sub" fill="var(--trudy)">TRUDY (sniffing)</text>
+          <line x1="20" y1="45" x2="470" y2="45" class="wire"/>
+          <rect id="pktBox" x="20" y="34" width="140" height="22" rx="4" fill="var(--panel3)" stroke="var(--confid)"/>
+          <text id="pktText" x="90" y="49" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--confid)">HELLO BOB</text>
+        </svg>
+      </div>
+      <div class="switch-row">
+        <div class="switch" id="encSwitch"><div class="knob"></div></div>
+        <span id="encLabel">Encryption: OFF — Trudy can read the message</span>
+      </div>
+      <div class="btn-row"><button class="btn" id="sendBtn">Send packet →</button></div>
+      <div class="scenario-caption" id="encCaption"></div>
+    </div>`;
+  }
+  if(key==='tamper'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Integrity</div>
+      <div class="scenario-anim">
+        <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">Original message (Alice → Bob):</div>
+        <div id="origMsg" style="font-family:var(--mono); font-size:13px; margin-top:6px; color:var(--text);">"Pay Bob $50"</div>
+        <div style="font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:14px;">Received by Bob:</div>
+        <div id="recvMsg" style="font-family:var(--mono); font-size:13px; margin-top:6px; color:var(--text);">"Pay Bob $50"</div>
+        <div id="integStatus" style="font-family:var(--mono); font-size:12px; margin-top:12px; color:var(--avail);">✓ Hash matches — integrity intact</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="tamperBtn">Trudy tampers the message</button>
+        <button class="btn" id="hashCheckBtn">Run integrity check (hash)</button>
+        <button class="btn" id="resetTamperBtn">Reset</button>
+      </div>
+    </div>`;
+  }
+  if(key==='dos'){
+    return `
+    <div class="scenario-box">
+      <div class="scenario-title">Live scenario — Availability</div>
+      <div class="scenario-anim">
+        <svg viewBox="0 0 500 120" width="100%" height="120">
+          <rect x="220" y="35" width="60" height="50" rx="6" id="serverBox" fill="var(--panel3)" stroke="var(--avail)" stroke-width="2"/>
+          <text x="250" y="65" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--avail)" id="serverText">UP</text>
+          <text x="250" y="105" text-anchor="middle" class="node-sub">BOB'S SERVER</text>
+          <text x="30" y="20" class="node-sub" fill="var(--alice)">Legit users</text>
+          <text x="400" y="20" class="node-sub" fill="var(--trudy)">Trudy's flood</text>
+          <g id="floodGroup"></g>
+        </svg>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="floodBtn">Trudy launches flood (DoS)</button>
+        <button class="btn" id="mitigateBtn">Bob enables rate-limiting</button>
+        <button class="btn" id="resetFloodBtn">Reset</button>
+      </div>
+      <div class="scenario-caption" id="floodCaption">Server is healthy. Legitimate requests get through instantly.</div>
+    </div>`;
+  }
+}
+
+function renderTriad(key){
+  const d = triadData[key];
+  document.getElementById('triadDetail').innerHTML = `
+    <div class="kicker" style="color:${d.color}">${key.toUpperCase()}</div>
+    <h3>${d.title}</h3>
+    <p class="def">${d.def}</p>
+    <p class="real">${d.real}</p>
+    <div class="pill-row">${d.pills.map(p=>`<span class="pill">${p}</span>`).join('')}</div>
+    ${scenarioHTML(d.scenario)}
+  `;
+  wireScenario(d.scenario);
+}
+document.querySelectorAll('.vertex').forEach(v=>{
+  v.addEventListener('click', ()=>{
+    document.querySelectorAll('.vertex').forEach(x=>{
+      x.classList.remove('active');
+      x.querySelector('circle').setAttribute('fill','var(--panel2)');
+      x.querySelector('circle').setAttribute('stroke','var(--line)');
+      x.querySelector('text').setAttribute('fill','var(--muted)');
+    });
+    v.classList.add('active');
+    const key = v.dataset.key;
+    const col = key==='confid' ? 'var(--confid)' : key==='integ' ? 'var(--integ)' : 'var(--avail)';
+    const dimcol = key==='confid' ? 'var(--confid-dim)' : key==='integ' ? 'var(--integ-dim)' : 'var(--avail-dim)';
+    v.querySelector('circle').setAttribute('fill',dimcol);
+    v.querySelector('circle').setAttribute('stroke',col);
+    v.querySelector('text').setAttribute('fill',col);
+    renderTriad(key);
+  });
+});
+renderTriad('confid');
+
+function wireScenario(kind){
+  if(kind==='encrypt'){
+    let encrypted=false;
+    const sw = document.getElementById('encSwitch');
+    sw.addEventListener('click', ()=>{
+      encrypted = !encrypted;
+      sw.classList.toggle('on', encrypted);
+      document.getElementById('encLabel').textContent = encrypted
+        ? 'Encryption: ON — Trudy only sees ciphertext'
+        : 'Encryption: OFF — Trudy can read the message';
+    });
+    document.getElementById('sendBtn').addEventListener('click', ()=>{
+      const box = document.getElementById('pktBox');
+      const txt = document.getElementById('pktText');
+      const cap = document.getElementById('encCaption');
+      txt.textContent = encrypted ? '#8f3a$2kd91@' : 'HELLO BOB';
+      box.setAttribute('stroke', encrypted ? 'var(--avail)' : 'var(--trudy)');
+      box.animate([{transform:'translateX(0px)'},{transform:'translateX(300px)'}],{duration:1400, easing:'ease-in-out'});
+      txt.animate([{transform:'translateX(0px)'},{transform:'translateX(300px)'}],{duration:1400, easing:'ease-in-out'});
+      setTimeout(()=>{
+        cap.innerHTML = encrypted
+          ? '<span style="color:var(--avail)">✓ Trudy intercepts the packet but only recovers ciphertext. Confidentiality preserved.</span>'
+          : '<span style="color:var(--trudy)">✗ Trudy intercepts the packet and reads "HELLO BOB" in plaintext. Confidentiality broken.</span>';
+      },1450);
+    });
+  }
+  if(kind==='tamper'){
+    document.getElementById('tamperBtn').addEventListener('click', ()=>{
+      document.getElementById('recvMsg').textContent = '"Pay Trudy $5000"';
+      document.getElementById('recvMsg').style.color = 'var(--trudy)';
+      document.getElementById('integStatus').textContent = '? unknown — run the integrity check';
+      document.getElementById('integStatus').style.color = 'var(--muted)';
+    });
+    document.getElementById('hashCheckBtn').addEventListener('click', ()=>{
+      const recv = document.getElementById('recvMsg').textContent;
+      const status = document.getElementById('integStatus');
+      if(recv.includes('Trudy')){
+        status.innerHTML = '✗ Hash mismatch: expected <code>a1f9…</code>, got <code>7bc2…</code> — integrity broken, message rejected.';
+        status.style.color = 'var(--trudy)';
+      } else {
+        status.innerHTML = '✓ Hash matches — integrity intact';
+        status.style.color = 'var(--avail)';
+      }
+    });
+    document.getElementById('resetTamperBtn').addEventListener('click', ()=>{
+      document.getElementById('recvMsg').textContent = '"Pay Bob $50"';
+      document.getElementById('recvMsg').style.color = 'var(--text)';
+      document.getElementById('integStatus').innerHTML = '✓ Hash matches — integrity intact';
+      document.getElementById('integStatus').style.color = 'var(--avail)';
+    });
+  }
+  if(kind==='dos'){
+    let floodTimer=null;
+    const group = document.getElementById('floodGroup');
+    document.getElementById('floodBtn').addEventListener('click', ()=>{
+      document.getElementById('floodCaption').innerHTML = '<span style="color:var(--trudy)">Flood in progress — legitimate requests start timing out.</span>';
+      let i=0;
+      floodTimer = setInterval(()=>{
+        i++;
+        const y = 20 + (i%5)*18;
+        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('cx','400'); c.setAttribute('cy', y); c.setAttribute('r','4');
+        c.setAttribute('fill','var(--trudy)');
+        group.appendChild(c);
+        c.animate([{transform:'translateX(0px)', opacity:1},{transform:'translateX(-150px)', opacity:0.2}],{duration:900, easing:'linear'});
+        setTimeout(()=>c.remove(),900);
+        if(i>6){
+          document.getElementById('serverBox').setAttribute('stroke','var(--trudy)');
+          document.getElementById('serverText').textContent='DOWN';
+          document.getElementById('serverText').setAttribute('fill','var(--trudy)');
+        }
+      }, 220);
+    });
+    document.getElementById('mitigateBtn').addEventListener('click', ()=>{
+      if(floodTimer) clearInterval(floodTimer);
+      document.getElementById('serverBox').setAttribute('stroke','var(--avail)');
+      document.getElementById('serverText').textContent='UP';
+      document.getElementById('serverText').setAttribute('fill','var(--avail)');
+      document.getElementById('floodCaption').innerHTML = '<span style="color:var(--avail)">Rate-limiting + filtering drop Trudy\'s flood at the edge. Legit traffic flows again.</span>';
+    });
+    document.getElementById('resetFloodBtn').addEventListener('click', ()=>{
+      if(floodTimer) clearInterval(floodTimer);
+      group.innerHTML='';
+      document.getElementById('serverBox').setAttribute('stroke','var(--avail)');
+      document.getElementById('serverText').textContent='UP';
+      document.getElementById('serverText').setAttribute('fill','var(--avail)');
+      document.getElementById('floodCaption').textContent = 'Server is healthy. Legitimate requests get through instantly.';
+    });
+  }
+}
+
+/* ================= EXTENDED CARDS ================= */
+document.querySelectorAll('.ext-card').forEach(c=>{
+  c.addEventListener('click', ()=>{ c.classList.toggle('open'); });
+});
+document.getElementById('signBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('sigHash').innerHTML = 'signature: <span style="color:var(--avail)">3f9a...e12c ✓ signed with Alice\'s private key</span>';
+});
+document.getElementById('repudBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const hash = document.getElementById('sigHash').textContent;
+  const result = document.getElementById('repudResult');
+  if(hash.includes('signed')){
+    result.innerHTML = '<span style="color:var(--avail)">Bob verifies the signature with Alice\'s public key — it matches. Alice cannot deny sending it. Non-repudiation holds.</span>';
+  } else {
+    result.innerHTML = '<span style="color:var(--trudy)">The message was never signed — Alice can plausibly deny sending it. Sign it first!</span>';
+  }
+});
+
+/* ================= AAA ================= */
+const consoleEl = document.getElementById('aaaConsole');
+function printConsole(lines){
+  consoleEl.innerHTML='';
+  lines.forEach((l,i)=>{
+    const div = document.createElement('div');
+    div.className = 'line ' + (l.cls||'');
+    div.style.animationDelay = (i*0.28)+'s';
+    div.textContent = l.text;
+    consoleEl.appendChild(div);
+  });
+}
+printConsole([{text:'$ awaiting login attempt...', cls:'sys'}]);
+document.querySelectorAll('.aaa-step').forEach(s=>{
+  s.addEventListener('click', ()=>{
+    document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active');
+  });
+});
+document.getElementById('runAliceBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+  printConsole([
+    {text:'[1] IDENTIFY   > user claims identity: alice@corp', cls:'sys'},
+    {text:'[2] AUTHENTICATE > password + OTP verified', cls:'ok'},
+    {text:'[3] AUTHORIZE  > role=FINANCE_ANALYST, resource=payroll:read → ALLOWED', cls:'ok'},
+    {text:'[4] ACCOUNT    > logged: alice@corp read payroll @ 09:14:02, src=10.2.1.4', cls:'sys'},
+    {text:'✓ session granted', cls:'ok'}
+  ]);
+  document.querySelectorAll('.aaa-step').forEach((el,i)=>setTimeout(()=>el.classList.add('active'), i*280));
+});
+document.getElementById('runTrudyBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.aaa-step').forEach(x=>x.classList.remove('active'));
+  printConsole([
+    {text:'[1] IDENTIFY   > user claims identity: alice@corp', cls:'sys'},
+    {text:'[2] AUTHENTICATE > stolen password accepted (!) — MFA challenge sent', cls:'warn'},
+    {text:'[2] AUTHENTICATE > OTP not provided — FAILED', cls:'deny'},
+    {text:'✗ access denied — session not established', cls:'deny'},
+    {text:'[4] ACCOUNT    > logged: FAILED login for alice@corp, src=185.44.x.x (flagged)', cls:'warn'}
+  ]);
+  setTimeout(()=>document.querySelector('.aaa-step[data-step="1"]').classList.add('active'),0);
+  setTimeout(()=>document.querySelector('.aaa-step[data-step="2"]').classList.add('active'),280);
+});
+
+/* auth factors strength meter */
+const factorCards = document.querySelectorAll('.factor-card');
+const selectedFactors = new Set();
+function updateStrength(){
+  const n = selectedFactors.size;
+  const pct = n===0?0:n===1?35:n===2?70:100;
+  document.getElementById('strengthFill').style.width = pct+'%';
+  document.getElementById('strengthPct').textContent = pct+'%';
+  const labels = {0:'0 factors — no authentication', 1:'1 factor — single-factor (weak, phishable)', 2:'2 factors — MFA (strong, industry baseline)', 3:'3 factors — very strong (rare outside high-security contexts)'};
+  document.getElementById('strengthLabel').textContent = n + (n===1?' factor selected: ':' factors selected: ') + labels[n].split('— ')[1];
+}
+factorCards.forEach(fc=>{
+  fc.addEventListener('click', ()=>{
+    const k = fc.dataset.factor;
+    if(selectedFactors.has(k)){ selectedFactors.delete(k); fc.classList.remove('on'); }
+    else { selectedFactors.add(k); fc.classList.add('on'); }
+    updateStrength();
+  });
+});
+updateStrength();
+
+/* authorization models */
+const models = [
+  {key:'dac', name:'DAC', full:'Discretionary Access Control', text:'The resource\'s <b>owner</b> decides who gets access. Alice creates a file and can grant Bob read access herself — flexible, but easy to over-share. Classic Unix file permissions are DAC.'},
+  {key:'mac', name:'MAC', full:'Mandatory Access Control', text:'A <b>central authority</b> (not the owner) sets rigid access rules based on classification labels — e.g. "Secret" vs "Top Secret." Alice can\'t grant access even if she wants to. Common in military/government systems.'},
+  {key:'rbac', name:'RBAC', full:'Role-Based Access Control', text:'Access is tied to a <b>role</b>, not a person. Alice gets "Finance Analyst" access because she holds that role; when she changes teams, her old access is simply reassigned. The most common model in modern businesses.'},
+  {key:'abac', name:'ABAC', full:'Attribute-Based Access Control', text:'Access is computed from <b>attributes</b> in real time — user department, resource sensitivity, time of day, location. "Allow if role=analyst AND time is business-hours AND device is company-managed." Most flexible, most complex to manage.'}
+];
+const modelTabs = document.getElementById('modelTabs');
+const modelPanel = document.getElementById('modelPanel');
+function renderModel(key){
+  const m = models.find(x=>x.key===key);
+  modelTabs.querySelectorAll('.model-tab').forEach(t=>t.classList.toggle('active', t.dataset.key===key));
+  modelPanel.innerHTML = `<h4>${m.name} — ${m.full}</h4><p>${m.text}</p>`;
+}
+models.forEach((m,i)=>{
+  const tab = document.createElement('div');
+  tab.className='model-tab'+(i===0?' active':'');
+  tab.dataset.key=m.key;
+  tab.textContent=m.name;
+  tab.addEventListener('click', ()=>renderModel(m.key));
+  modelTabs.appendChild(tab);
+});
+renderModel('dac');
+
+/* ================= IAM RING ================= */
+const iamStages = [
+  {
+    key: 'identify',
+    label: 'Identify',
+    title: '1 · Identification',
+    angle: -90,
+    text: 'HR/IT creates a unique digital identity for Alice — one account, never shared, tied to her as a person.'
+  },
+  {
+    key: 'provision',
+    label: 'Provision',
+    title: '2 · Provisioning',
+    angle: -30,
+    text: 'Access is granted based on her role (e.g. "Finance Analyst") — usually automatically, following least-privilege.'
+  },
+  {
+    key: 'authn',
+    label: 'Authenticate',
+    title: '3 · Authentication',
+    angle: 30,
+    text: 'Every session, Alice proves her identity again — password + MFA — before anything else happens.'
+  },
+  {
+    key: 'authz',
+    label: 'Authorize',
+    title: '4 · Authorization',
+    angle: 90,
+    text: 'Each request Alice makes is checked against her permissions (RBAC/ABAC policies) in real time.'
+  },
+  {
+    key: 'monitor',
+    label: 'Monitor',
+    title: '5 · Monitor & Audit',
+    angle: 150,
+    text: 'All access is logged for accountability; anomalies (e.g. Trudy using Alice\'s stolen token from a new country) trigger alerts.'
+  },
+  {
+    key: 'deprov',
+    label: 'Deprovision',
+    title: '6 · Deprovisioning',
+    angle: 210,
+    text: 'When Alice leaves the company, every credential and permission is revoked immediately — closing the loop.'
+  }
+];
+
+const iamSvg = document.getElementById('iamSvg');
+
+const cx = 130;
+const cy = 130;
+const r = 100;
+
+/* Outer guide circle */
+iamSvg.innerHTML = `
+  <circle
+    cx="${cx}"
+    cy="${cy}"
+    r="${r}"
+    fill="none"
+    stroke="var(--line)"
+    stroke-width="1.5"
+    stroke-dasharray="3 6"
+  />
+`;
+
+/* Create 6-sided graph */
+let points = [];
+
+iamStages.forEach((s) => {
+  const rad = s.angle * Math.PI / 180;
+
+  const x = cx + r * Math.cos(rad);
+  const y = cy + r * Math.sin(rad);
+
+  points.push(`${x},${y}`);
+});
+
+/* Close the polygon with Z */
+const hexPath = `M ${points.join(' L ')} Z`;
+
+const hexEl = document.createElementNS(
+  'http://www.w3.org/2000/svg',
+  'path'
+);
+
+hexEl.setAttribute('d', hexPath);
+hexEl.setAttribute('fill', 'none');
+hexEl.setAttribute('stroke', 'var(--line)');
+hexEl.setAttribute('stroke-width', '1');
+
+iamSvg.appendChild(hexEl);
+
+
+/* Create the 6 nodes */
+iamStages.forEach((s) => {
+
+  const rad = s.angle * Math.PI / 180;
+
+  const x = cx + r * Math.cos(rad);
+  const y = cy + r * Math.sin(rad);
+
+  const g = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'g'
+  );
+
+  g.setAttribute('class', 'iam-node');
+  g.setAttribute('data-key', s.key);
+  g.setAttribute(
+    'transform',
+    `translate(${x},${y})`
+  );
+
+  g.innerHTML = `
+    <circle
+      r="16"
+      fill="var(--panel2)"
+      stroke="var(--line)"
+      stroke-width="1.5"
+    />
+
+    <text
+      y="4"
+      text-anchor="middle"
+    >
+      ${s.label.slice(0, 2).toUpperCase()}
+    </text>
+  `;
+
+  g.addEventListener('click', () => {
+    selectIam(s.key);
+  });
+
+  iamSvg.appendChild(g);
+});
+
+
+/* Select a stage */
+function selectIam(key) {
+
+  const s = iamStages.find(x => x.key === key);
+
+  if (!s) return;
+
+  document.querySelectorAll('.iam-node').forEach(n => {
+
+    const active = n.dataset.key === key;
+
+    n.classList.toggle('active', active);
+
+    n.querySelector('circle').setAttribute(
+      'stroke',
+      active ? 'var(--confid)' : 'var(--line)'
+    );
+
+    n.querySelector('circle').setAttribute(
+      'fill',
+      active ? 'var(--confid-dim)' : 'var(--panel2)'
+    );
+  });
+
+  document.getElementById('iamPanel').innerHTML = `
+    <div class="kicker">IAM LIFECYCLE</div>
+    <h4>${s.title}</h4>
+    <p>${s.text}</p>
+  `;
+}
+
+
+/* Initial state */
+selectIam('identify');
+
+/* ================= QUIZ ================= */
+const quizData = [
+  {q:'Bob\'s server runs a piece of software with a known bug that lets an attacker skip login entirely. On its own, before anyone tries to use it, what is this bug called?',
+   opts:['A risk','A vulnerability','A threat actor','An exploit'], correct:1,
+   explain:'Correct — an unused weakness in the system is a vulnerability. It only becomes part of an "exploit" once someone builds a technique to abuse it, and a "risk" once you weigh its likelihood and impact.'},
+  {q:'Trudy floods Bob\'s web server with junk requests until real customers can\'t load the page. Which CIA property is attacked?',
+   opts:['Confidentiality','Integrity','Availability','Non-repudiation'], correct:2,
+   explain:'Correct — the service is still confidential and unaltered, it\'s just unreachable. That\'s an availability attack (DoS).'},
+  {q:'Trudy intercepts Alice\'s email and changes the bank account number before forwarding it to Bob. Which property is attacked?',
+   opts:['Availability','Integrity','Accountability','Authentication'], correct:1,
+   explain:'Correct — the content was altered in transit without authorization. That\'s an integrity violation.'},
+  {q:'A security team scores an issue as "Likelihood 5 × Impact 5 = 25." What are they calculating?',
+   opts:['The vulnerability','The threat actor\'s skill','The risk','The control strength'], correct:2,
+   explain:'Correct — Risk = Likelihood × Impact is exactly the formula used to prioritize which issues get fixed first.'},
+  {q:'Trudy reads Alice\'s unencrypted chat messages by sniffing the WiFi network. Which property is attacked?',
+   opts:['Confidentiality','Availability','Non-repudiation','Authorization'], correct:0,
+   explain:'Correct — unauthorized disclosure of information is a confidentiality breach.'},
+  {q:'Alice digitally signs a contract, so she can\'t later claim she never agreed to it. Which property does this provide?',
+   opts:['Authorization','Availability','Non-repudiation','Confidentiality'], correct:2,
+   explain:'Correct — a verifiable, undeniable link between Alice and the action is exactly non-repudiation.'}
+];
+let quizScore=0, answered=0;
+const quizCard = document.getElementById('quizCard');
+quizData.forEach((q,qi)=>{
+  const block = document.createElement('div');
+  block.className='quiz-q';
+  block.innerHTML = `<div class="qtext">${qi+1}. ${q.q}</div>
+    <div class="quiz-opts">${q.opts.map((o,oi)=>`<div class="quiz-opt" data-qi="${qi}" data-oi="${oi}">${o}</div>`).join('')}</div>
+    <div class="quiz-feedback" id="fb-${qi}"></div>`;
+  quizCard.appendChild(block);
+});
+const scoreEl = document.createElement('div');
+scoreEl.className='quiz-score';
+scoreEl.id='quizScore';
+scoreEl.textContent = 'Score: 0 / ' + quizData.length;
+quizCard.appendChild(scoreEl);
+quizCard.addEventListener('click',(e)=>{
+  const opt = e.target.closest('.quiz-opt');
+  if(!opt) return;
+  const qi = +opt.dataset.qi, oi = +opt.dataset.oi;
+  const group = quizCard.querySelectorAll(`.quiz-opt[data-qi="${qi}"]`);
+  if(group[0].classList.contains('disabled')) return;
+  group.forEach(g=>g.classList.add('disabled'));
+  const q = quizData[qi];
+  group.forEach((g,i)=>{
+    if(i===q.correct) g.classList.add('correct');
+    else if(i===oi) g.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb-'+qi);
+  if(oi===q.correct){
+    quizScore++;
+    fb.innerHTML = '<span style="color:var(--avail)">✓ ' + q.explain + '</span>';
+  } else {
+    fb.innerHTML = '<span style="color:var(--trudy)">✗ ' + q.explain + '</span>';
+  }
+  answered++;
+  document.getElementById('quizScore').textContent = 'Score: ' + quizScore + ' / ' + quizData.length + (answered===quizData.length ? '  — complete' : '');
+});
+</script>
+
+</body>
+</html>

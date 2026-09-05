@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Information Security 101 — Cybersecurity Briefing</title>
+<meta name="description" content="An introduction to information security, framed as a live SOC terminal briefing: the CIA triad, threat actors, attack techniques, defenses, resources, and entry-level certifications." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07111f;
+  --bg2: #0b1728;
+  --surface: #0f2035;
+  --surface2: #122942;
+  --surface3: #173653;
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(56, 189, 248, 0.42);
+  --text: #f5f9ff;
+  --soft: #c6d4e3;
+  --muted: #8195aa;
+  --muted-light: #94a3b8;
+  --paper: #ffffff;
+  --cyan: #38bdf8;
+  --blue: #60a5fa;
+  --violet: #a78bfa;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #fb7185;
+  --rose: #f43f5e;
+  --display: 'DM Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--display);
+  background:
+    radial-gradient(900px 500px at 8% 0%, rgba(56, 189, 248, 0.10), transparent 65%),
+    radial-gradient(800px 500px at 92% 15%, rgba(167, 139, 250, 0.09), transparent 65%),
+    linear-gradient(180deg, var(--bg), #081526 55%, #06101c);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 40%, transparent 0, transparent 38%, rgba(2, 8, 18, 0.35) 100%);
+}
+
+::selection {
+  background: var(--cyan);
+  color: #03101c;
+}
+
+h1, h2, h3 {
+  font-family: var(--display);
+  margin: 0;
+  font-weight: 700;
+}
+
+a {
+  color: inherit;
+}
+
+.progress-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 0;
+  z-index: 100;
+  background: linear-gradient(90deg, var(--cyan), var(--blue), var(--violet));
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
+}
+
+.masthead {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  height: 62px;
+  padding: 0 clamp(18px, 4vw, 60px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 500 10px var(--mono);
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: linear-gradient(180deg, rgba(4, 11, 21, 0.94), rgba(4, 11, 21, 0.72));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(18px);
+}
+
+.masthead .tag {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.masthead .tag::before {
+  content: "● ";
+  color: var(--green);
+}
+
+.tabnav {
+  position: fixed;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(6, 15, 28, 0.78);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.tabnav button {
+  all: unset;
+  cursor: pointer;
+  min-width: 142px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font: 500 9px var(--mono);
+  letter-spacing: .07em;
+  text-align: right;
+  transition: .22s ease;
+}
+
+.tabnav button:hover {
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.07);
+  border-color: rgba(56, 189, 248, 0.20);
+  transform: translateX(-2px);
+}
+
+.tabnav button.active {
+  color: var(--cyan);
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.14), rgba(96, 165, 250, 0.04));
+  border-color: rgba(56, 189, 248, 0.30);
+  box-shadow: inset 3px 0 var(--cyan);
+}
+
+.tabnav .no {
+  opacity: .55;
+  margin-right: 6px;
+}
+
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 110px clamp(25px, 10vw, 155px) 90px;
+  position: relative;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  right: 10%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(56, 189, 248, 0.10);
+  border-radius: 50%;
+  box-shadow: 0 0 0 70px rgba(56, 189, 248, 0.018), 0 0 0 140px rgba(167, 139, 250, 0.012);
+  z-index: -1;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: calc(10% + 200px);
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(50%, -50%) rotate(45deg);
+  border: 1px solid rgba(56, 189, 248, 0.20);
+  background: rgba(56, 189, 248, 0.025);
+  z-index: -1;
+}
+
+.hero .case-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 25px;
+  color: var(--muted);
+  font: 500 10px var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.hero .case-no .dot {
+  color: var(--green);
+}
+
+.hero h1 {
+  max-width: 10ch;
+  font-size: clamp(52px, 8.5vw, 112px);
+  line-height: .94;
+  letter-spacing: -.065em;
+}
+
+.hero h1 .redact {
+  position: relative;
+  display: inline-block;
+  color: var(--text);
+  padding-right: 4px;
+}
+
+.hero h1 .redact .bar {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  border-right: 2px solid var(--cyan);
+  box-shadow: 7px 0 25px rgba(56, 189, 248, 0.45);
+  animation: revealText 0.8s ease forwards;
+  animation-delay: var(--d, 0s);
+  transform-origin: right;
+}
+
+@keyframes revealText {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.hero .sub {
+  max-width: 650px;
+  margin-top: 30px;
+  color: var(--soft);
+  font-size: clamp(16px, 1.45vw, 19px);
+  line-height: 1.7;
+}
+
+.hero .sub strong {
+  color: var(--text) !important;
+}
+
+.stamp-inline {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px dashed var(--cyan);
+  border-radius: 4px;
+  color: var(--cyan);
+  font: 600 11px var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.scroll-cue {
+  position: absolute;
+  bottom: 35px;
+  left: clamp(25px, 10vw, 155px);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--muted);
+  font: 500 9px var(--mono);
+  letter-spacing: .15em;
+}
+
+.scroll-cue .line {
+  height: 40px;
+  width: 1px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-cue .line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--cyan);
+  animation: drip 1.8s infinite;
+}
+
+@keyframes drip {
+  0% { top: -100%; }
+  60% { top: 100%; }
+  100% { top: 100%; }
+}
+
+.slide, .grid-bg, .closing {
+  min-height: 100svh;
+  position: relative;
+  padding: 110px 24px 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(650px 300px at 50% 0%, rgba(56, 189, 248, 0.035), transparent 70%),
+    linear-gradient(180deg, rgba(8, 21, 37, 0.98), rgba(5, 13, 24, 0.99));
+  border-bottom: 1px solid var(--line);
+}
+
+.slide::before, .grid-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1080px, calc(100% - 48px));
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.20), transparent);
+}
+
+.slide-inner, .sec-head {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+
+.eyebrow-room, .sec-head .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--cyan);
+  font: 600 10px var(--mono);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.eyebrow-room::before, .sec-head .eyebrow::before {
+  content: "";
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+
+.doc {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(30px, 4.5vw, 54px);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(18, 41, 66, 0.93), rgba(7, 19, 34, 0.96));
+  box-shadow: 0 25px 75px rgba(0, 0, 0, 0.30), inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.doc::after {
+  content: "";
+  position: absolute;
+  right: -100px;
+  top: -100px;
+  width: 260px;
+  height: 260px;
+  border: 1px solid rgba(56, 189, 248, 0.10);
+  border-radius: 50%;
+  box-shadow: 0 0 0 35px rgba(56, 189, 248, 0.018), 0 0 0 70px rgba(56, 189, 248, 0.012);
+  pointer-events: none;
+}
+
+.doc .file-tag {
+  position: relative;
+  display: inline-flex;
+  z-index: 1;
+  margin-bottom: 24px;
+  padding: 6px 11px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 999px;
+  background: rgba(4, 12, 23, 0.72);
+  color: var(--muted);
+  font: 500 9px var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.doc .file-tag::before {
+  content: "SEC / ";
+  color: var(--cyan);
+}
+
+.doc h2 {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin-bottom: 10px;
+  font-size: clamp(32px, 4.4vw, 54px);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+}
+
+.doc .kicker {
+  margin: 0 0 20px;
+  color: var(--cyan);
+  font: 600 10px var(--mono);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.doc p {
+  max-width: 70ch;
+  margin: 0 0 17px;
+  color: var(--soft);
+  font-size: 16px;
+  line-height: 1.72;
+}
+
+.doc p.lead {
+  max-width: 72ch;
+  color: var(--text);
+  font-size: clamp(18px, 2vw, 21px);
+  line-height: 1.62;
+}
+
+.doc strong, .doc em {
+  color: var(--cyan);
+}
+
+hr.rule {
+  border: 0;
+  border-top: 1px dashed var(--line);
+  margin: 28px 0;
+}
+
+.stamp {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  padding: 6px 11px;
+  border: 1px solid var(--tone, var(--cyan));
+  border-radius: 999px;
+  color: var(--tone, var(--cyan));
+  background: rgba(56, 189, 248, 0.05);
+  font: 600 9px var(--mono);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(-8px) scale(.95);
+  transition: .4s ease;
+}
+
+.stamp::before {
+  content: "● ";
+  font-size: 8px;
+}
+
+.slide.in-view .stamp {
+  opacity: 1;
+  transform: none;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.card, .res-card {
+  position: relative;
+  overflow: hidden;
+  padding: 21px;
+  border: 1px solid var(--line);
+  border-left: 2px solid rgba(56, 189, 248, 0.45);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  transition: .25s ease;
+}
+
+.card::before, .res-card::before {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+  opacity: .55;
+}
+
+.card:hover, .res-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--line-strong);
+  background: linear-gradient(145deg, rgba(56, 189, 248, 0.08), rgba(255, 255, 255, 0.015));
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
+}
+
+.card h3, .res-card h3 {
+  color: var(--text);
+  font-size: 16px;
+  letter-spacing: -.01em;
+  margin-bottom: 8px;
+}
+
+.card p, .res-card p {
+  color: var(--soft);
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.card .tag-row {
+  color: var(--cyan);
+  font: 500 10px var(--mono);
+  letter-spacing: .05em;
+  margin-top: 10px;
+}
+
+.card .tag-row::before {
+  content: "↳ ";
+  color: var(--muted);
+}
+
+.profile {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.profile .badge {
+  flex: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  font: 600 11px var(--mono);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: linear-gradient(145deg, rgba(56, 189, 248, 0.12), rgba(167, 139, 250, 0.08));
+}
+
+.dossier-list {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+
+.dossier-list li {
+  display: grid;
+  grid-template-columns: 175px 1fr;
+  gap: 18px;
+  padding: 17px 5px;
+  border-top: 1px solid var(--line);
+}
+
+.dossier-list li:first-child {
+  border-top-color: var(--line-strong);
+}
+
+.dossier-list .label {
+  color: var(--cyan);
+  font: 600 10px var(--mono);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.dossier-list .label::before {
+  content: "// ";
+  color: var(--muted);
+}
+
+.dossier-list p {
+  margin: 0;
+  color: var(--soft);
+  font-size: 15px;
+}
+
+.diagram-wrap {
+  margin-top: 26px;
+  padding: 18px 20px 10px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at center, rgba(56, 189, 248, 0.06), transparent 55%),
+    rgba(2, 10, 20, 0.50);
+}
+
+.diagram-wrap .diagram-label {
+  color: var(--muted);
+  font: 500 9px var(--mono);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.diagram-wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.triad-circle {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 480;
+  stroke-dashoffset: 480;
+}
+
+.slide.in-view .triad-circle {
+  animation: drawCircle 1.4s ease forwards;
+}
+
+.triad-circle.c1 { stroke: var(--cyan); animation-delay: .1s !important; }
+.triad-circle.c2 { stroke: var(--amber); animation-delay: .35s !important; }
+.triad-circle.c3 { stroke: var(--red); animation-delay: .6s !important; }
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+.triad-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  fill: var(--text);
+  opacity: 0;
+}
+
+.slide.in-view .triad-label {
+  animation: fadeUp .6s ease forwards;
+}
+
+.triad-label.l1 { animation-delay: .9s !important; }
+.triad-label.l2 { animation-delay: 1.05s !important; }
+.triad-label.l3 { animation-delay: 1.2s !important; }
+
+.triad-core {
+  opacity: 0;
+}
+
+.slide.in-view .triad-core {
+  animation: pulseCore 2.2s ease-in-out 1.4s infinite;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseCore {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
+}
+
+.path-line {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2;
+}
+
+.path-node circle {
+  fill: var(--surface);
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.path-node text {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--soft);
+  text-transform: uppercase;
+}
+
+.path-dot {
+  fill: var(--red);
+  filter: drop-shadow(0 0 6px var(--red));
+}
+
+.slide.in-view .path-dot {
+  offset-path: path('M20,30 L155,30 L290,30 L425,30 L560,30');
+  animation: travelPath 6s linear infinite;
+}
+
+@keyframes travelPath {
+  0% { offset-distance: 0%; opacity: 1; }
+  92% { offset-distance: 100%; opacity: 1; }
+  93% { opacity: 0; }
+  94% { offset-distance: 0%; }
+  95% { opacity: 1; }
+  100% { offset-distance: 0%; }
+}
+
+.ring {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 640;
+  stroke-dashoffset: 640;
+}
+
+.slide.in-view .ring {
+  animation: drawCircle 1.1s ease forwards;
+}
+
+.ring.r1 { stroke: var(--muted); animation-delay: .1s !important; }
+.ring.r2 { stroke: var(--cyan); animation-delay: .35s !important; }
+.ring.r3 { stroke: var(--amber); animation-delay: .6s !important; }
+.ring.r4 { stroke: var(--red); animation-delay: .85s !important; }
+
+.ring-core {
+  fill: var(--text);
+  opacity: 0;
+}
+
+.slide.in-view .ring-core {
+  animation: fadeUp .5s ease forwards 1.15s;
+}
+
+.ring-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--soft);
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.slide.in-view .ring-label {
+  animation: fadeUp .5s ease forwards;
+}
+
+.ring-label.rl1 { animation-delay: .3s !important; }
+.ring-label.rl2 { animation-delay: .55s !important; }
+.ring-label.rl3 { animation-delay: .8s !important; }
+.ring-label.rl4 { animation-delay: 1.05s !important; }
+
+.sec-head {
+  margin-bottom: 40px;
+}
+
+.sec-head h2 {
+  font-size: clamp(30px, 4.5vw, 52px);
+  letter-spacing: -.045em;
+}
+
+.sec-head p {
+  max-width: 70ch;
+  margin: 13px 0 0;
+  color: var(--soft);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.res-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+
+.res-card .plat {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  margin-bottom: 13px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.05);
+  color: var(--cyan);
+  font: 600 9px var(--mono);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.res-card .level {
+  display: inline-flex;
+  padding: 4px 8px;
+  margin-left: 6px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 999px;
+  color: var(--amber);
+  background: rgba(251, 191, 36, 0.05);
+  font: 600 9px var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.res-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cyan);
+  font: 500 10px var(--mono);
+  text-decoration: none;
+  margin-top: 6px;
+}
+
+.res-card a::after {
+  content: "↗";
+  font-size: 13px;
+}
+
+.book-list {
+  width: min(1080px, 100%);
+  margin: 28px auto 0;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(18, 41, 66, 0.75), rgba(7, 19, 34, 0.85));
+  color: var(--soft);
+  font: 500 12px var(--mono);
+  line-height: 2;
+  list-style: none;
+}
+
+.book-list li::before {
+  content: "› ";
+  color: var(--cyan);
+  font-weight: bold;
+}
+
+.signoff {
+  margin-top: 30px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--cyan);
+  background: rgba(56, 189, 248, 0.05);
+  color: var(--cyan);
+  font: 600 11px var(--mono);
+  letter-spacing: .12em;
+}
+
+.footer-strip {
+  padding: 27px 20px 35px;
+  text-align: center;
+  background: #040b14;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  font: 500 9px var(--mono);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+@media(max-width:900px){
+  .tabnav {
+    top: auto;
+    bottom: 14px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    flex-direction: row;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    border-radius: 999px;
+    scrollbar-width: none;
+  }
+  .tabnav::-webkit-scrollbar {
+    display: none;
+  }
+  .tabnav button {
+    min-width: auto;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 7px 11px;
+  }
+  .tabnav .no {
+    display: none;
+  }
+  .tabnav button.active {
+    box-shadow: inset 0 -2px var(--cyan);
+  }
+  .grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media(max-width:650px){
+  .masthead {
+    height: 56px;
+    padding: 0 14px;
+    font-size: 8px;
+  }
+  .masthead > div:first-child {
+    max-width: 68%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hero {
+    padding: 100px 22px 90px;
+  }
+  .hero::before, .hero::after {
+    display: none;
+  }
+  .hero h1 {
+    font-size: clamp(46px, 15vw, 74px);
+  }
+  .slide, .grid-bg, .closing {
+    padding: 90px 15px 105px;
+    display: block;
+  }
+  .slide-inner {
+    padding-top: 5vh;
+  }
+  .doc {
+    padding: 34px 20px 28px;
+    border-radius: 16px;
+  }
+  .doc h2 {
+    font-size: clamp(30px, 9vw, 43px);
+  }
+  .stamp {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: inline-flex;
+    margin: 0 0 18px;
+  }
+  .dossier-list li {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .diagram-wrap {
+    padding: 14px 8px;
+    overflow: hidden;
+  }
+  .diagram-wrap svg {
+    min-width: 520px;
+    transform: translateX(-7%);
+  }
+  .res-grid {
+    grid-template-columns: 1fr;
+  }
+  .sec-head {
+    margin-bottom: 28px;
+  }
+}
+
+@media(prefers-reduced-motion: reduce){
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .redact .bar {
+    animation: none;
+    transform: scaleX(0);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-rail" id="progressRail"></div>
+
+<nav class="tabnav" id="tabnav" aria-label="Briefing log sections">
+  <button data-target="s00"><span class="no">00</span>BOOT</button>
+  <button data-target="s01"><span class="no">01</span>BRIEFING</button>
+  <button data-target="s02"><span class="no">02</span>CIA TRIAD</button>
+  <button data-target="s03"><span class="no">03</span>SUSPECTS</button>
+  <button data-target="s04"><span class="no">04</span>ATTACKS</button>
+  <button data-target="s05"><span class="no">05</span>ARCHIVE</button>
+  <button data-target="s06"><span class="no">06</span>DEFENSES</button>
+  <button data-target="s07"><span class="no">07</span>RULES</button>
+  <button data-target="s08"><span class="no">08</span>RECRUITING</button>
+  <button data-target="s09"><span class="no">09</span>RESOURCES</button>
+  <button data-target="s10"><span class="no">10</span>CERTS</button>
+  <button data-target="s11"><span class="no">11</span>END</button>
+</nav>
+
+<!-- ============================================================ 00 · BOOT ============================================================ -->
+<section class="hero" id="s00">
+  <h1>
+    <span class="redact">Every<span class="bar" style="--d:0.1s"></span></span>
+    <span class="redact">secret<span class="bar" style="--d:0.35s"></span></span>
+    <span class="redact">has<span class="bar" style="--d:0.6s"></span></span>
+    <span class="redact">a<span class="bar" style="--d:0.75s"></span></span>
+    <span class="redact">way<span class="bar" style="--d:0.95s"></span></span>
+    <span class="redact">out.<span class="bar" style="--d:1.2s"></span></span>
+  </h1>
+  <p class="sub">
+    <strong>information security</strong> —
+    It focuses on one main question: how do we protect information?
+
+what we protect, who attacks it, how attacks happen, how we prevent them, and how to keep improving our security skills.
+    <br><br>
+  </p>
+</section>
+
+<!-- ============================================================ 01 · BRIEFING ============================================================ -->
+<section class="slide" id="s01">
+  <div class="slide-inner">
+    <div class="eyebrow-room">1. Opening Briefing</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--cyan)">Baseline</div>
+      <h2>What is information security?</h2>
+      <p class="lead">
+        Information security — often shortened to <strong>infosec</strong> — is the
+        practice of protecting information, and the systems that store, process,
+        and move it, from anyone or anything that shouldn't have access to it.
+      </p>
+      <p>
+        That's a broader mandate than it sounds. It covers a login password
+        scrawled on a sticky note as much as it covers a nation-state intercepting
+        undersea fiber-optic cables. It covers a hospital's patient records,
+        a bank's transaction ledger, a factory's control systems, and the phone
+        in your pocket. If it holds information that matters, it's in scope.
+      </p>
+      <p>
+        Infosec is frequently confused with — and overlaps heavily with —
+        <strong>cybersecurity</strong>. The distinction that matters: cybersecurity
+        is specifically about digital systems and networks; information security
+        is the wider discipline, digital <em>and</em> physical, that cybersecurity
+        sits inside. A locked filing cabinet is an information-security control.
+        It just isn't a cybersecurity one.
+      </p>
+      <p>
+        Nearly everything the field does traces back to three properties every
+        piece of information should have. That's the subject of the next log.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 · CIA TRIAD ============================================================ -->
+<section class="slide" id="s02">
+  <div class="slide-inner">
+    <div class="eyebrow-room">2. CIA</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--cyan)">Foundational</div>
+      <h2>The CIA triad</h2>
+      <p>
+        Three properties, one model, used everywhere in the field — from a
+        five-minute security briefing to a formal risk assessment. Every
+        control, every policy, and every incident in this log ultimately
+        maps back to one (or more) of these three.
+      </p>
+      <div class="grid cols-3">
+        <div class="card">
+          <h3>Confidentiality</h3>
+          <p>Only the people who are supposed to see something can see it.
+          Broken by a leaked database, a shoulder-surfed password, or an
+          unencrypted laptop left in a taxi.</p>
+          <div class="tag-row">ENFORCED BY: encryption, access control, need-to-know</div>
+        </div>
+        <div class="card">
+          <h3>Integrity</h3>
+          <p>Information stays accurate and unaltered unless someone with the
+          right to change it does so. Broken by a tampered invoice, a
+          corrupted backup, or a hacked vote tally.</p>
+          <div class="tag-row">ENFORCED BY: checksums, digital signatures, audit trails</div>
+        </div>
+        <div class="card">
+          <h3>Availability</h3>
+          <p>Information and systems are there when the people who legitimately
+          need them try to use them. Broken by a ransomware lockout, a power
+          outage, or a denial-of-service flood.</p>
+          <div class="tag-row">ENFORCED BY: backups, redundancy, capacity planning</div>
+        </div>
+      </div>
+
+      <hr class="rule">
+      <p style="margin-bottom:0;">
+        Most real incidents violate more than one leg of the triad at once.
+        A ransomware attack, for instance, is primarily an availability
+        attack — but the attackers usually steal a copy of the data first,
+        turning it into a confidentiality breach too.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 · SUSPECTS ============================================================ -->
+<section class="slide" id="s03">
+  <div class="slide-inner">
+    <div class="eyebrow-room">3. Persons of Interest</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--amber)">Restricted</div>
+      <h2>Who's actually on the other end</h2>
+      <p>
+        "Hacker" is a stand-in for a wide range of very different people
+        with very different budgets, patience, and goals. Knowing which
+        one you're up against changes what "good enough" security looks like.
+      </p>
+      <div class="grid cols-2" style="margin-top:18px;">
+        <div class="card">
+          <div class="profile">
+            <div class="badge">SK</div>
+            <div>
+              <h3>Script kiddies</h3>
+              <p>Low skill, off-the-shelf tools, opportunistic. They scan the
+              whole internet for anyone still running an unpatched, well-known
+              vulnerability — not you specifically, just anyone.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="profile">
+            <div class="badge">HA</div>
+            <div>
+              <h3>Hacktivists</h3>
+              <p>Politically or ideologically motivated. Goal is usually
+              disruption or embarrassment — a defaced website, a leaked
+              internal memo — rather than direct financial gain.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="profile">
+            <div class="badge">OC</div>
+            <div>
+              <h3>Organized cybercrime</h3>
+              <p>Financially motivated, well-resourced, and often run like a
+              business — some ransomware gangs operate customer-support
+              chat for their victims. Highest-volume threat most
+              organizations face.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="profile">
+            <div class="badge">NS</div>
+            <div>
+              <h3>Nation-state actors</h3>
+              <p>Patient, well-funded, and willing to spend months inside a
+              network before doing anything. Goals range from espionage to
+              pre-positioning for sabotage during a future conflict.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="profile">
+            <div class="badge">IN</div>
+            <div>
+              <h3>Insiders</h3>
+              <p>Not always malicious — a surprising share of breaches trace
+              back to an employee who was careless, phished, or simply
+              never had their access revoked after leaving. The insider
+              doesn't need to break in; they're already inside.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 04 · M.O. ============================================================ -->
+<section class="slide" id="s04">
+  <div class="slide-inner">
+    <div class="eyebrow-room">Attack Techniques</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--rose)">Active Threat</div>
+      <h2>Common Attacks</h2>
+      <p>Most attacks fall into a small set of recurring patterns. Learn
+      these six and you'll recognize the shape of almost everything in
+      the news.</p>
+
+      <ul class="dossier-list">
+        <li>
+          <div class="label">Phishing</div>
+          <p>A message impersonating someone trustworthy, engineered to get
+          you to click a link, hand over a password, or open a file. Still
+          the single most common way attackers get their first foothold —
+          because it targets people, not code.</p>
+        </li>
+        <li>
+          <div class="label">Malware</div>
+          <p>Software written to do something harmful once it's running on
+          your system: steal data, spy on you, or hand an attacker remote
+          control. Ransomware is malware that encrypts your files and
+          demands payment for the key.</p>
+        </li>
+        <li>
+          <div class="label">Denial of Service</div>
+          <p>Flooding a system with more traffic or requests than it can
+          handle, so legitimate users can't get through. A "distributed"
+          denial of service (DDoS) does this from thousands of hijacked
+          devices at once.</p>
+        </li>
+        <li>
+          <div class="label">Man-in-the-Middle</div>
+          <p>Secretly sitting between two parties who think they're talking
+          directly to each other — over unsecured Wi-Fi, for instance —
+          reading or altering the traffic as it passes through.</p>
+        </li>
+        <li>
+          <div class="label">SQL injection</div>
+          <p>Slipping database commands into a web form the developer
+          expected to only ever contain ordinary text, tricking the
+          application into running them — sometimes handing over an
+          entire database.</p>
+        </li>
+        <li>
+          <div class="label">Social engineering</div>
+          <p>The umbrella term for manipulating people rather than machines
+          — a fake IT-support call, a stranger in a uniform tailgating
+          through a locked door. Phishing is just the digital version of
+          this much older technique.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 05 · ARCHIVE ============================================================ -->
+<section class="slide" id="s05">
+  <div class="slide-inner">
+    <div class="eyebrow-room">5. From the Archive</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--muted-light)">Historical</div>
+      <h2>Three incidents that changed the field</h2>
+     
+      <div class="grid cols-3" style="margin-top:18px;">
+        <div class="card">
+          <h3>Stuxnet · 2010</h3>
+          <p>A worm that physically damaged centrifuges at an Iranian nuclear
+          facility by subtly altering their spin speed while showing operators
+          normal readings. Widely seen as the moment cyberattacks proved they
+          could cause physical, real-world damage.</p>
+        </div>
+        <div class="card">
+          <h3>WannaCry · 2017</h3>
+          <p>A ransomware worm that spread on its own across networks in over
+          a hundred countries in a matter of hours, exploiting a Windows flaw
+          that already had a patch available. A textbook case for why patching
+          promptly matters.</p>
+        </div>
+        <div class="card">
+          <h3>Target breach · 2013</h3>
+          <p>Attackers got in through credentials stolen from a small
+          third-party HVAC vendor, then moved sideways across the network to
+          reach point-of-sale systems. A lasting lesson in supply-chain risk
+          and network segmentation.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 06 · DEFENSES ============================================================ -->
+<section class="slide" id="s06">
+  <div class="slide-inner">
+    <div class="eyebrow-room">6. DEFENSES</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--cyan)">Field Issue</div>
+      <h2>How to stop</h2>
+
+      <ul class="dossier-list">
+        <li>
+          <div class="label">Encryption</div>
+          <p>Scrambles data so it's unreadable without the right key —
+          whether it's sitting on a disk or traveling across a network.
+          Turns a stolen laptop into a brick instead of a breach.</p>
+        </li>
+        <li>
+          <div class="label">Multi-factor auth</div>
+          <p>Requires a second proof of identity beyond a password — a code,
+          a key, a fingerprint. Neutralizes the vast majority of stolen-password
+          attacks outright.</p>
+        </li>
+        <li>
+          <div class="label">Patch management</div>
+          <p>Applying security updates promptly. Most exploited
+          vulnerabilities already had a fix available — the gap was in
+          applying it, not in the vendor's response time.</p>
+        </li>
+        <li>
+          <div class="label">Network segmentation</div>
+          <p>Dividing a network into isolated zones so a breach in one area
+          — a guest Wi-Fi network, say — can't automatically reach the
+          systems that actually matter.</p>
+        </li>
+        <li>
+          <div class="label">Backups</div>
+          <p>Regular, tested, and — critically — kept offline or otherwise
+          out of reach of anything that could encrypt or delete the live
+          copy along with the backup.</p>
+        </li>
+        <li>
+          <div class="label">Security awareness</div>
+          <p>Training people to recognize phishing and social engineering.
+          The strongest firewall in the world doesn't stop someone from
+          typing their password into a convincing fake login page.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 07 · Principles ============================================================ -->
+<section class="slide" id="s07">
+  <div class="slide-inner">
+    <div class="eyebrow-room">7. Guiding Principles</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--cyan)">7.Rules</div>
+      <h2>Security Concepts in Practice</h2>
+      
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Defense in depth</h3>
+          <p>Layer multiple, independent controls so that one failure
+          doesn't mean total compromise — like a building with a fence, a
+          lock, an alarm, and a safe, not just one of those.</p>
+        </div>
+        <div class="card">
+          <h3>Least privilege</h3>
+          <p>Give every person and system exactly the access they need to
+          do their job, and nothing more. Limits how far an attacker — or
+          a mistake — can spread once inside.</p>
+        </div>
+        <div class="card">
+          <h3>Zero trust</h3>
+          <p>"Never trust, always verify." Don't automatically trust a
+          request just because it came from inside the corporate network —
+          verify every user and device, every time.</p>
+        </div>
+        <div class="card">
+          <h3>Need-to-know</h3>
+          <p>A close cousin of least privilege, applied to information
+          specifically: access to sensitive data is granted only to those
+          who genuinely need it to do their work.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 09 · RECRUITING ============================================================ -->
+<section class="slide" id="s08">
+  <div class="slide-inner">
+    <div class="eyebrow-room">9. Job Roles</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--amber)">Open Roles</div>
+      <h2>Careers in the Field</h2>
+      
+      <div class="grid cols-3">
+        <div class="card">
+          <h3>SOC analyst</h3>
+          <p>Watches security alerts in real time and investigates the
+          ones that look real. Usually the entry point into the field.</p>
+        </div>
+        <div class="card">
+          <h3>Penetration tester</h3>
+          <p>Attacks systems on purpose, with permission, to find the
+          holes before someone without permission does.</p>
+        </div>
+        <div class="card">
+          <h3>Security engineer</h3>
+          <p>Designs and builds the actual defenses — firewalls, identity
+          systems, secure infrastructure — that everyone else relies on.</p>
+        </div>
+        <div class="card">
+          <h3>Incident responder</h3>
+          <p>Gets called in once something has already gone wrong, to
+          contain the damage and figure out exactly what happened.</p>
+        </div>
+        <div class="card">
+          <h3>GRC analyst</h3>
+          <p>Governance, risk, and compliance — makes sure the organization
+          actually meets the security standards it's supposed to.</p>
+        </div>
+        <div class="card">
+          <h3>CISO</h3>
+          <p>Chief Information Security Officer — owns the whole security
+          program and answers for it at the executive level.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESOURCES (second-to-last) ============ -->
+<section class="grid-bg" id="s09">
+  <div class="sec-head">
+    <div class="eyebrow">10 · Keep Learning</div>
+    <h2>Keep Learning</h2>
+  </div>
+
+  <div class="res-grid">
+    <div class="res-card">
+      <span class="plat">YouTube</span>
+      <h3>PowerCert Animated Videos</h3>
+      <p>Short, clean whiteboard-style animations that visually break down networking hardware, topologies, and protocols — great for a first pass on any topic in this sheet.</p>
+      <a href="https://www.youtube.com/@PowerCertAnimatedVideos" target="_blank" rel="noopener">youtube.com/@PowerCertAnimatedVideos</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">YouTube</span>
+      <h3>NetworkChuck</h3>
+      <p>High-energy, practical walkthroughs of networking and cybersecurity concepts, including hands-on labs with real routers, switches, and home-lab builds.</p>
+      <a href="https://www.youtube.com/@NetworkChuck" target="_blank" rel="noopener">youtube.com/@NetworkChuck</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">YouTube</span>
+      <h3>David Bombal</h3>
+      <p>In-depth interviews and tutorials covering networking, Cisco/CCNA topics, and career-focused content from an experienced network engineer and trainer.</p>
+      <a href="https://www.youtube.com/@davidbombal" target="_blank" rel="noopener">youtube.com/@davidbombal</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">YouTube</span>
+      <h3>IBM Technology</h3>
+      <p>Concept-first explainer videos from IBM covering networking fundamentals, cloud infrastructure, and security — good for grounding terminology in enterprise context.</p>
+      <a href="https://www.youtube.com/@IBMTechnology" target="_blank" rel="noopener">youtube.com/@IBMTechnology</a>
+    </div>
+  </div>
+
+  <ul class="book-list">
+    <li>Professor Messer — free CompTIA Network+/Security+ video courses and study notes</li>
+    <li>CompTIA official study guides — Network+ (N10-009) and Security+ (SY0-701)</li>
+    <li>Cisco Networking Academy — free "Networking Basics" and "Introduction to Cybersecurity" courses</li>
+  </ul>
+</section>
+
+<!-- ============ CERTIFICATIONS (final content log) ============ -->
+<section class="grid-bg" id="s10">
+  <div class="sec-head">
+    <div class="eyebrow">11 · Certifications</div>
+    <h2>Build Your Security Path</h2>
+    <p>Certifications won't replace hands-on practice, but a recognized entry-level credential is often the fastest way to get a resume past an automated filter. These are the ones most commonly recommended for someone starting from zero.</p>
+  </div>
+
+  <div class="res-grid">
+    <div class="res-card">
+      <span class="plat">Vendor-neutral<span class="level">Entry</span></span>
+      <h3>CompTIA A+</h3>
+      <p>The usual first stop before anything security-specific — covers core IT fundamentals, hardware, operating systems, and troubleshooting that everything else in the field assumes you already know.</p>
+      <a href="https://www.comptia.org/certifications/a" target="_blank" rel="noopener">comptia.org/certifications/a</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">Vendor-neutral<span class="level">Foundational</span></span>
+      <h3>CompTIA Network+</h3>
+      <p>Validates the networking fundamentals this lab sheet covers — devices, topologies, and the OSI/TCP-IP models — and is a common prerequisite before Security+.</p>
+      <a href="https://www.comptia.org/certifications/network" target="_blank" rel="noopener">comptia.org/certifications/network</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">Vendor-neutral<span class="level">Foundational</span></span>
+      <h3>CompTIA Security+</h3>
+      <p>The most widely requested baseline security credential in job postings — covers threat detection, risk management, and core cryptography concepts. Referenced elsewhere in this briefing for a reason.</p>
+      <a href="https://www.comptia.org/certifications/security" target="_blank" rel="noopener">comptia.org/certifications/security</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">(ISC)²<span class="level">Entry</span></span>
+      <h3>Certified in Cybersecurity (CC)</h3>
+      <p>An entry-level credential from the organization behind CISSP, built specifically for people with no prior experience — covers security principles, network security, and incident response basics.</p>
+      <a href="https://www.isc2.org/certifications/cc" target="_blank" rel="noopener">isc2.org/certifications/cc</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">Cisco<span class="level">Entry</span></span>
+      <h3>CCST Cybersecurity</h3>
+      <p>Cisco's entry point into its certification track — basic security concepts, endpoint threats, and network defense, without assuming prior networking certification.</p>
+      <a href="https://www.cisco.com/site/us/en/learn/training-certifications/certifications/entry/ccst-cybersecurity/index.html" target="_blank" rel="noopener">cisco.com — CCST Cybersecurity</a>
+    </div>
+    <div class="res-card">
+      <span class="plat">Google<span class="level">Entry</span></span>
+      <h3>Google Cybersecurity Certificate</h3>
+      <p>A self-paced online program built for complete beginners aiming at SOC analyst roles — covers SOC fundamentals, Python, SQL, and Linux basics over a few months.</p>
+      <a href="https://grow.google/certificates/cybersecurity/" target="_blank" rel="noopener">grow.google/certificates/cybersecurity</a>
+    </div>
+  </div>
+
+  <ul class="book-list">
+    <li>Typical order: A+ → Network+ → Security+ (or CC/Google cert as a Security+ alternative)</li>
+    <li>Certifications validate vocabulary and concepts — pair them with a home lab or CTF practice for real skill</li>
+    <li>Most employers treat these as a floor, not a ceiling, for entry-level SOC or help-desk-to-security roles</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 12 · Briefing ============================================================ -->
+<section class="slide closing" id="s11">
+  <div class="slide-inner">
+    <div class="eyebrow-room">11 Briefing</div>
+    <div class="doc">
+      <div class="stamp" style="--tone:var(--cyan)">Roadmap</div>
+      <h2>Takeaways</h2>
+      <p class="lead">
+        Information security isn't a state you reach — it's a discipline
+        you keep practicing, because the people on the other side keep
+        adapting too. Nothing in this briefing is a finish line.
+      </p>
+      <p>
+        If you want to keep going, three places are worth bookmarking:
+        the <strong>OWASP</strong> project for web-application security
+        fundamentals, <strong>NIST's</strong> Cybersecurity Framework for
+        how organizations structure a security program, and a foundational
+        certification like <strong>CompTIA Security+</strong> if you want
+        a structured path into the field.
+      </p>
+  
+    </div>
+  </div>
+</section>
+
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide, .hero, .grid-bg'));
+  var tabButtons = Array.prototype.slice.call(document.querySelectorAll('.tabnav button'));
+  var masthead = document.getElementById('masthead-slide');
+  var rail = document.getElementById('progressRail');
+  var total = slides.length - 1;
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) e.target.classList.add('in-view');
+      });
+    }, { threshold: 0.35 });
+    slides.forEach(function(s){ io.observe(s); });
+
+    var navIo = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          var id = e.target.id;
+          tabButtons.forEach(function(b){
+            b.classList.toggle('active', b.dataset.target === id);
+          });
+          var idx = slides.findIndex(function(s){ return s.id === id; });
+          if (idx > -1) masthead.textContent = String(idx).padStart(2,'0') + ' / ' + total;
+        }
+      });
+    }, { threshold: 0.5 });
+    slides.forEach(function(s){ navIo.observe(s); });
+  }
+
+  tabButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  window.addEventListener('scroll', function(){
+    var doc = document.documentElement;
+    var pct = (doc.scrollTop) / (doc.scrollHeight - doc.clientHeight) * 100;
+    rail.style.width = (isFinite(pct) ? pct : 0) + '%';
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
