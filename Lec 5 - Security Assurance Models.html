@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Assurance Models - DS5105</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700;8..60,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECEEE6;
+    --panel:#F5F6F0;
+    --ink:#14171B;
+    --ink-soft:#4B5058;
+    --line:#C6CCC1;
+    --navy:#1B3A63;   --navy-fill:#E3EBF5;
+    --amber:#A6590F;  --amber-fill:#F9ECD8;
+    --green:#256B41;  --green-fill:#E3F1E8;
+    --red:#9C2B24;    --red-fill:#F8E5E3;
+    --violet:#5A3E86; --violet-fill:#EEE8F6;
+    --serif:"Source Serif 4", Georgia, serif;
+    --sans:"Inter", sans-serif;
+    --mono:"IBM Plex Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:17.5px; line-height:1.65;}
+  ::selection{background:var(--ink); color:var(--paper);}
+  h1,h2,h3{font-family:var(--serif); font-weight:700; margin:0; color:var(--ink);}
+  p{margin:0 0 14px; max-width:72ch;}
+  a{color:var(--navy);}
+  strong{color:var(--ink); font-weight:700;}
+  .mono{font-family:var(--mono);}
+
+  /* ================= HERO ================= */
+  .hero{ background:var(--ink); color:#EEEFE9; padding:56px 0 0; position:relative; overflow:hidden;}
+  .hero-inner{ max-width:1200px; margin:0 auto; padding:0 5vw 44px; display:grid; grid-template-columns:1.5fr 1fr; gap:48px; align-items:center;}
+  .hero-code{ display:inline-flex; align-items:center; gap:10px; margin-bottom:18px;}
+  .hero-code .chip{ font-family:var(--mono); font-size:13px; font-weight:600; border:1.5px solid #9FA593; padding:4px 10px; color:#EEEFE9;}
+  .hero-code .label{ font-family:var(--mono); font-size:13px; color:#B7BCAC; letter-spacing:.02em;}
+  .hero h1{ color:#F6F6F0; font-size:clamp(30px,4.2vw,50px); line-height:1.1; max-width:15ch;}
+  .hero .sub{ color:#C7CBBD; font-size:17px; margin-top:16px; max-width:54ch;}
+  .badge-wrap{ display:flex; justify-content:center;}
+  .badge-wrap svg{ width:100%; max-width:280px; height:auto;}
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  @keyframes chainpulse{ 0%,100%{ stroke-dashoffset:0; } 100%{ stroke-dashoffset:-24; } }
+  #heroLED{ animation:pulse 2.6s ease-in-out infinite; transform-origin:center;}
+  #heroFlow{ animation:chainpulse 1.4s linear infinite; }
+  @media (prefers-reduced-motion:reduce){ #heroLED,#heroFlow{ animation:none; } }
+
+  /* checkpoint path nav */
+  .checkpoints{ background:var(--ink); border-top:1px solid #33383A; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .cp-track{ max-width:1200px; margin:0 auto; padding:0 5vw; display:flex; align-items:center; min-width:max-content;}
+  .cp{ display:flex; align-items:center; gap:9px; text-decoration:none; padding:14px 16px 14px 0; position:relative; white-space:nowrap;}
+  .cp:not(:last-child)::after{ content:""; width:22px; height:1px; background:#3C4142; margin:0 2px;}
+  .cp-num{ width:24px; height:24px; border-radius:50%; border:1.5px solid var(--dot,#8E9384); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; color:#EEEFE9; flex-shrink:0; transition:background .15s ease;}
+  .cp-label{ font-family:var(--sans); font-size:13.5px; color:#9BA091; transition:color .15s ease;}
+  .cp.active .cp-num{ background:var(--dot,#8E9384); color:var(--ink);}
+  .cp.active .cp-label{ color:#F0F1EA;}
+  .cp[data-accent="navy"]{ --dot:#6E9CD1;}
+  .cp[data-accent="amber"]{ --dot:#E0A05D;}
+  .cp[data-accent="green"]{ --dot:#6FBE8F;}
+  .cp[data-accent="red"]{ --dot:#D98781;}
+  .cp[data-accent="violet"]{ --dot:#B39BDD;}
+  .cp[data-accent="ink"]{ --dot:#B9BEB1;}
+
+  /* ================= SECTIONS ================= */
+  main{ max-width:1200px; margin:0 auto;}
+  .sec{ position:relative; padding:64px 5vw; border-bottom:1px solid var(--line);}
+  .sec::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--accent-line, var(--ink));}
+  .sec[data-accent="navy"]{ --accent-line:var(--navy); background:color-mix(in srgb, var(--navy-fill) 45%, var(--paper));}
+  .sec[data-accent="amber"]{ --accent-line:var(--amber); background:color-mix(in srgb, var(--amber-fill) 45%, var(--paper));}
+  .sec[data-accent="green"]{ --accent-line:var(--green); background:color-mix(in srgb, var(--green-fill) 45%, var(--paper));}
+  .sec[data-accent="red"]{ --accent-line:var(--red); background:color-mix(in srgb, var(--red-fill) 45%, var(--paper));}
+  .sec[data-accent="violet"]{ --accent-line:var(--violet); background:color-mix(in srgb, var(--violet-fill) 45%, var(--paper));}
+  .sec[data-accent="ink"]{ --accent-line:var(--ink); background:var(--paper);}
+  .sec-inner{ max-width:900px; margin:0 auto;}
+
+  .sec-head{ display:flex; align-items:center; gap:18px; margin-bottom:20px;}
+  .sec-badge{ width:52px; height:52px; border-radius:50%; border:2px solid var(--accent-line); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:16px; font-weight:600; color:var(--accent-line); flex-shrink:0; background:var(--panel);}
+  h2.title{ font-size:clamp(23px,2.4vw,30px); line-height:1.2;}
+  h3.sub{ font-family:var(--serif); font-weight:700; font-size:19px; margin:28px 0 10px;}
+  .lede{ font-size:17.5px; color:var(--ink-soft); max-width:66ch;}
+
+  /* ---------- diagram system ---------- */
+  .diagram{ background:var(--panel); border:1.5px solid var(--line); padding:22px 24px; margin:20px 0;}
+  .dlabel{ font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-bottom:12px;}
+  .dstack{ display:flex; flex-direction:column; align-items:center; max-width:640px; margin:0 auto;}
+  .dbox{ width:100%; border:2px solid var(--navy); background:var(--navy-fill); color:var(--ink);
+    padding:11px 16px; font-weight:600; font-size:15px; text-align:center;}
+  .dbox.amber{ border-color:var(--amber); background:var(--amber-fill);}
+  .dbox.green{ border-color:var(--green); background:var(--green-fill);}
+  .dbox.violet{ border-color:var(--violet); background:var(--violet-fill);}
+  .dbox.red{ border-color:var(--red); background:var(--red-fill); color:var(--red);}
+  .dbox.dark{ border-color:var(--ink); background:var(--ink); color:#fff;}
+  .darrow{ font-size:20px; line-height:1; color:var(--ink-soft); font-weight:700; margin:2px 0;}
+  .dhoriz{ display:flex; align-items:stretch; gap:0; flex-wrap:wrap; justify-content:center;}
+  .dhoriz .dbox{ width:auto; min-width:112px;}
+  .dhoriz .darrow{ display:flex; align-items:center; padding:0 10px; margin:0;}
+
+  .callout{ border-left:5px solid var(--ink); background:var(--panel); padding:14px 18px; margin:20px 0; font-size:15.5px; max-width:none;}
+  .callout.amber{ border-color:var(--amber);}
+  .callout.navy{ border-color:var(--navy);}
+  .callout.green{ border-color:var(--green);}
+  .callout.red{ border-color:var(--red);}
+
+  .cards3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0;}
+  .cards2{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:18px 0;}
+  .cards5{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:18px 0;}
+  .mini{ border:1.5px solid var(--line); padding:14px 16px; background:var(--panel); border-top:3px solid var(--accent-line, var(--green));}
+  .mini h5{ font-family:var(--mono); font-size:12px; text-transform:uppercase; margin:0 0 6px; color:var(--accent-line, var(--green)); font-weight:700;}
+  .mini p{ font-size:14px; margin:0; max-width:none;}
+  .mini.clickable{ cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;}
+  .mini.clickable:hover{ transform:translateY(-2px); box-shadow:0 4px 0 rgba(0,0,0,0.06);}
+  .mini.selected{ background:#fff; box-shadow:0 0 0 2px var(--accent-line, var(--green)) inset;}
+
+  table{ width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+  th{ background:var(--accent-line, var(--navy)); color:#fff; text-align:left; padding:10px 12px; font-family:var(--mono); font-size:11.5px; text-transform:uppercase; font-weight:600;}
+  td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:nth-child(even) td{ background:rgba(0,0,0,0.02);}
+  td.tick{ border-left:4px solid var(--row-accent, var(--line));}
+
+  .formula{ font-family:var(--mono); font-size:14.5px; background:var(--panel); border-left:5px solid var(--accent-line, var(--green)); padding:14px 18px; margin:16px 0; line-height:1.9; max-width:none;}
+
+  dl.glossary dt{ font-family:var(--mono); font-weight:700; margin-top:14px; color:var(--navy); font-size:15px;}
+  dl.glossary dd{ margin:3px 0 0;}
+
+  .activity{ border:1.5px dashed var(--navy); background:var(--navy-fill); padding:20px 22px; margin-top:20px;}
+  .activity h4{ font-family:var(--mono); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--navy); margin:0 0 10px; font-weight:700;}
+
+  details.qa{ border:1.5px solid var(--line); background:var(--panel); padding:13px 17px; margin-bottom:8px;}
+  details.qa summary{ cursor:pointer; font-family:var(--mono); font-size:13.5px; font-weight:600; color:var(--ink);}
+  details.qa .a{ margin-top:8px; font-size:15px; max-width:none;}
+
+  footer{ background:var(--ink); color:#9BA091; padding:26px 5vw; font-family:var(--mono); font-size:11.5px; text-align:center;}
+
+  /* ---------- console / interactive panels ---------- */
+  .console{ background:var(--panel); color:var(--ink); border:1.5px solid var(--line); padding:26px 28px; margin:22px 0;}
+  .console-label{ font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-bottom:16px; display:flex; align-items:center; gap:8px;}
+  .console-label::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0;}
+  button.action{ font-family:var(--mono); font-size:13.5px; font-weight:600; letter-spacing:.02em; background:var(--green); color:#fff;
+    border:none; padding:12px 20px; cursor:pointer; transition:background .2s ease;}
+  button.action:hover{ background:var(--ink);}
+  button.action.ghost{ background:none; border:1.5px solid var(--line); color:var(--ink-soft);}
+  button.action.ghost:hover{ background:var(--panel); color:var(--ink);}
+
+  /* ---------- house / hotspot diagram ---------- */
+  .house-wrap{ display:grid; grid-template-columns:1.1fr 1fr; gap:26px; align-items:center;}
+  .house-wrap svg{ width:100%; height:auto;}
+  .hotspot{ cursor:pointer; }
+  .hotspot circle.ring{ fill:none; stroke-width:2.5; transition:r .15s ease, stroke-width .15s ease;}
+  .hotspot:hover circle.ring, .hotspot.active circle.ring{ stroke-width:4;}
+  .house-info{ min-height:190px;}
+  .house-tag{ font-family:var(--mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; padding:3px 9px; display:inline-block; margin-bottom:8px;}
+  .house-tag.vuln{ color:var(--amber); border:1.5px solid var(--amber); background:var(--amber-fill);}
+  .house-tag.threat{ color:var(--navy); border:1.5px solid var(--navy); background:var(--navy-fill);}
+  .house-tag.attack{ color:var(--red); border:1.5px solid var(--red); background:var(--red-fill);}
+  .house-tag.cm{ color:var(--green); border:1.5px solid var(--green); background:var(--green-fill);}
+  .house-info p{ font-size:15px; max-width:none;}
+  .house-hint{ font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-top:6px;}
+
+  /* ---------- click-to-reveal matcher list ---------- */
+  .matcher{ display:flex; flex-direction:column; gap:8px; margin:18px 0;}
+  .mrow{ display:flex; align-items:center; justify-content:space-between; gap:14px; border:1.5px solid var(--line); background:var(--panel); padding:12px 16px; cursor:pointer; transition:background .15s ease;}
+  .mrow:hover{ background:#fff;}
+  .mrow .mtext{ font-size:14.5px; flex:1;}
+  .mrow .mtag{ font-family:var(--mono); font-size:11.5px; font-weight:700; padding:4px 10px; border:1.5px solid var(--line); color:var(--ink-soft); white-space:nowrap; transition:all .15s ease;}
+  .mrow.revealed .mtag{ color:#fff;}
+  .mrow.revealed[data-cat="design"] .mtag{ background:var(--navy); border-color:var(--navy);}
+  .mrow.revealed[data-cat="implementation"] .mtag{ background:var(--red); border-color:var(--red);}
+  .mrow.revealed[data-cat="configuration"] .mtag{ background:var(--amber); border-color:var(--amber);}
+  .mrow.revealed[data-cat="human"] .mtag{ background:var(--violet); border-color:var(--violet);}
+
+  /* ---------- T/V/R quiz chips ---------- */
+  .quizrow{ border:1.5px solid var(--line); background:var(--panel); padding:14px 16px; margin-bottom:10px;}
+  .quizrow .qstmt{ font-size:15px; margin-bottom:10px; max-width:none;}
+  .qchoices{ display:flex; gap:8px; flex-wrap:wrap;}
+  .qchip{ font-family:var(--mono); font-size:12.5px; font-weight:600; border:1.5px solid var(--line); background:#fff; padding:7px 14px; cursor:pointer; transition:all .15s ease;}
+  .qchip:hover{ border-color:var(--ink);}
+  .qchip.correct{ background:var(--green-fill); border-color:var(--green); color:var(--green);}
+  .qchip.wrong{ background:var(--red-fill); border-color:var(--red); color:var(--red);}
+  .qfeedback{ font-family:var(--mono); font-size:12.5px; margin-top:8px; min-height:16px; color:var(--ink-soft);}
+
+  /* ---------- attack tree ---------- */
+  .tree{ margin:20px 0;}
+  .tree-goal{ font-family:var(--mono); font-weight:700; font-size:14px; text-align:center; border:2px solid var(--red); background:var(--red-fill); color:var(--red); padding:10px 16px; max-width:340px; margin:0 auto 18px;}
+  .tree-branches{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .leaf{ border:1.5px solid var(--line); background:var(--panel); padding:12px 14px; cursor:pointer; text-align:center;}
+  .leaf .lname{ font-size:13.5px; font-weight:600;}
+  .leaf-cm{ display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-family:var(--mono); font-size:12px; color:var(--green); text-align:left;}
+  .leaf.open .leaf-cm{ display:block;}
+  .leaf.open{ background:#fff; box-shadow:0 0 0 2px var(--navy) inset;}
+
+  /* ---------- chain breaker ---------- */
+  .chainflow{ display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap; margin:22px 0;}
+  .cnode{ font-family:var(--mono); font-weight:700; font-size:13px; text-align:center; padding:12px 14px; border:2px solid var(--ink); background:#fff; min-width:110px;}
+  .cnode.threat{ border-color:var(--navy); background:var(--navy-fill); color:var(--navy);}
+  .cnode.vuln{ border-color:var(--amber); background:var(--amber-fill); color:var(--amber);}
+  .cnode.attack{ border-color:var(--red); background:var(--red-fill); color:var(--red);}
+  .cnode.impact{ border-color:var(--ink); background:var(--ink); color:#fff;}
+  .clink{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 10px;}
+  .clink .arrow{ font-size:22px; color:var(--ink-soft);}
+  .shieldbtn{ all:unset; cursor:pointer; font-family:var(--mono); font-size:11px; border:1.5px solid var(--line); background:var(--panel); padding:5px 9px; text-align:center; transition:all .15s ease;}
+  .shieldbtn.on{ background:var(--green); border-color:var(--green); color:#fff;}
+  .chain-result{ margin-top:10px; padding:14px 18px; font-family:var(--mono); font-size:14px; font-weight:600; border:1.5px solid var(--red); background:var(--red-fill); color:var(--red); text-align:center;}
+  .chain-result.safe{ border-color:var(--green); background:var(--green-fill); color:var(--green);}
+
+  /* ---------- risk calculator ---------- */
+  .riskcalc{ display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:center;}
+  .rslider{ margin-bottom:18px;}
+  .rslider label{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;}
+  .rslider input[type=range]{ width:100%; accent-color:var(--navy);}
+  .rslider .rval{ font-weight:700; color:var(--ink);}
+  .riskresult{ text-align:center; padding:24px 18px; border:2px solid var(--line); background:#fff;}
+  .riskresult .rband{ font-family:var(--mono); font-size:22px; font-weight:700; letter-spacing:.02em; margin-bottom:6px;}
+  .riskresult .rscore{ font-family:var(--mono); font-size:13px; color:var(--ink-soft);}
+  .riskresult .rbar{ height:10px; background:var(--line); margin-top:14px; position:relative; overflow:hidden;}
+  .riskresult .rbar-fill{ height:100%; width:0%; transition:width .2s ease, background .2s ease;}
+
+  /* ---------- cycle diagram ---------- */
+  .cycle-wrap{ display:flex; justify-content:center; margin:20px 0;}
+  .cycle-wrap svg{ width:100%; max-width:340px; height:auto;}
+  .cycle-label{ font-family:var(--sans); font-size:13px; font-weight:600; fill:var(--ink);}
+  .cycle-sub{ font-family:var(--mono); font-size:9.5px; fill:var(--ink-soft);}
+  .cycle-center{ font-family:var(--mono); font-size:11px; fill:var(--ink-soft);}
+
+  /* ---------- worked example timeline ---------- */
+  .timeline{ position:relative; margin:26px 0 10px; padding-left:34px;}
+  .timeline::before{ content:""; position:absolute; left:13px; top:6px; bottom:6px; width:2px; background:var(--line);}
+  .tl-step{ position:relative; padding-bottom:22px;}
+  .tl-step:last-child{ padding-bottom:0;}
+  .tl-dot{ position:absolute; left:-34px; top:0; width:28px; height:28px; border-radius:50%; background:var(--panel); border:2px solid var(--step-accent, var(--navy)); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; font-weight:700; color:var(--step-accent, var(--navy));}
+  .tl-card{ border:1.5px solid var(--line); background:var(--panel); border-left:4px solid var(--step-accent, var(--navy)); padding:12px 16px;}
+  .tl-card .tl-num{ font-family:var(--mono); font-size:11px; color:var(--step-accent, var(--navy)); font-weight:700; letter-spacing:.03em;}
+  .tl-card p{ margin:2px 0 0; font-size:15px; max-width:none;}
+  .tl-card p.tl-detail{ font-weight:400; font-size:14px; color:var(--ink-soft); margin-top:4px;}
+
+  @media (max-width:760px){
+    .hero-inner{ grid-template-columns:1fr; text-align:left;}
+    .badge-wrap{ order:-1; max-width:200px;}
+    .cards3, .cards2, .riskcalc, .house-wrap{ grid-template-columns:1fr;}
+    .cards5{ grid-template-columns:repeat(2,1fr);}
+    .tree-branches{ grid-template-columns:1fr;}
+    .sec{ padding:48px 6vw;}
+    .chainflow{ flex-direction:column;}
+    .clink{ flex-direction:row; padding:8px 0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-code"><span class="chip">DS5105</span><span class="label">Information Security - Lecture Note</span></div>
+      <h1>Security Assurance Models</h1>
+      <p class="sub">Threats, Vulnerabilities, Attacks and Countermeasures - the four moving parts every security decision is built from, and how they link together into risk.</p>
+    </div>
+    <div class="badge-wrap">
+      <svg viewBox="0 0 220 300" aria-hidden="true">
+        <rect x="4" y="4" width="212" height="292" rx="14" fill="#1C2023" stroke="#4A5158" stroke-width="2"/>
+        <circle cx="110" cy="30" r="6" fill="#0F1210" stroke="#4A5158" stroke-width="2"/>
+        <rect x="26" y="52" width="168" height="150" fill="#262B2E" stroke="#4A5158" stroke-width="1.5"/>
+        <!-- chain: threat -> vuln -> attack -> impact -->
+        <circle cx="60" cy="88" r="15" fill="none" stroke="#6E9CD1" stroke-width="3"/>
+        <text x="60" y="92" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6E9CD1">T</text>
+        <circle cx="110" cy="88" r="15" fill="none" stroke="#E0A05D" stroke-width="3"/>
+        <text x="110" y="92" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#E0A05D">V</text>
+        <circle cx="160" cy="88" r="15" fill="none" stroke="#D98781" stroke-width="3"/>
+        <text x="160" y="92" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#D98781">A</text>
+        <path id="heroFlow" d="M75 88 H95 M125 88 H145" stroke="#8FDCAC" stroke-width="2.5" stroke-dasharray="4 4" fill="none"/>
+        <rect x="42" y="118" width="136" height="9" fill="#4A5158"/>
+        <rect x="42" y="136" width="110" height="7" fill="#33383A"/>
+        <rect x="42" y="150" width="70" height="7" fill="#33383A"/>
+        <circle id="heroLED" cx="170" cy="180" r="7" fill="#6FBE8F"/>
+        <text x="110" y="182" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8FDCAC">COUNTERMEASURE</text>
+        <text x="110" y="222" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#E7E8E1" font-weight="600">RISK MANAGED</text>
+        <rect x="20" y="240" width="180" height="18" fill="#0F1210"/>
+      </svg>
+    </div>
+  </div>
+  <nav class="checkpoints" aria-label="Lecture sections">
+    <div class="cp-track" id="cpTrack">
+      <a href="#foundations" class="cp" data-accent="ink"><span class="cp-num">1</span><span class="cp-label">The big four</span></a>
+      <a href="#vulnerability" class="cp" data-accent="amber"><span class="cp-num">2</span><span class="cp-label">Vulnerability</span></a>
+      <a href="#threat" class="cp" data-accent="navy"><span class="cp-num">3</span><span class="cp-label">Threat</span></a>
+      <a href="#attack" class="cp" data-accent="red"><span class="cp-num">4</span><span class="cp-label">Attack</span></a>
+      <a href="#countermeasure" class="cp" data-accent="green"><span class="cp-num">5</span><span class="cp-label">Countermeasure</span></a>
+      <a href="#chain" class="cp" data-accent="ink"><span class="cp-num">6</span><span class="cp-label">The chain</span></a>
+      <a href="#risk" class="cp" data-accent="violet"><span class="cp-num">7</span><span class="cp-label">Risk</span></a>
+      <a href="#lifecycle" class="cp" data-accent="navy"><span class="cp-num">8</span><span class="cp-label">Assurance lifecycle</span></a>
+      <a href="#example" class="cp" data-accent="amber"><span class="cp-num">9</span><span class="cp-label">Worked example</span></a>
+      <a href="#selftest" class="cp" data-accent="green"><span class="cp-num">10</span><span class="cp-label">Self-test</span></a>
+      <a href="#recap" class="cp" data-accent="ink"><span class="cp-num">11</span><span class="cp-label">Recap</span></a>
+    </div>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ===== 1 FOUNDATIONS ===== -->
+  <section id="foundations" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">01</div><h2 class="title">The big four</h2></div>
+      <p class="lede">In <strong>Lecture 2</strong> you met the words <em>asset, vulnerability, threat</em> and <em>risk</em> briefly. Today we slow down on four of them - <strong>Vulnerability</strong>, <strong>Threat</strong>, <strong>Attack</strong> and <strong>Countermeasure</strong> - because almost every security decision you will ever make is really just an argument about these four things and how they connect.</p>
+
+      <p>Start with something you already understand perfectly: your own house.</p>
+
+      <div class="house-wrap">
+        <svg viewBox="0 0 320 260" aria-hidden="true">
+          <!-- sky -->
+          <rect x="0" y="0" width="320" height="260" fill="none"/>
+          <!-- ground -->
+          <rect x="0" y="220" width="320" height="40" fill="#DCE0D2"/>
+          <!-- house body -->
+          <rect x="70" y="110" width="150" height="110" fill="#F5F6F0" stroke="#14171B" stroke-width="2.5"/>
+          <polygon points="60,110 145,55 230,110" fill="#E3EBF5" stroke="#14171B" stroke-width="2.5"/>
+          <!-- door -->
+          <rect x="150" y="160" width="34" height="60" fill="#EEE8F6" stroke="#14171B" stroke-width="2"/>
+          <!-- window (vulnerability) : drawn slightly ajar -->
+          <rect x="90" y="140" width="40" height="34" fill="#fff" stroke="#14171B" stroke-width="2"/>
+          <line x1="110" y1="140" x2="110" y2="174" stroke="#14171B" stroke-width="1.5"/>
+          <line x1="90" y1="157" x2="130" y2="157" stroke="#14171B" stroke-width="1.5"/>
+          <!-- ajar flap -->
+          <polygon points="130,140 148,132 148,166 130,174" fill="#F9ECD8" stroke="#A6590F" stroke-width="1.5" opacity="0.9"/>
+
+          <!-- hotspot: vulnerability (the ajar window) -->
+          <g class="hotspot" data-key="vuln" tabindex="0">
+            <circle class="ring" cx="112" cy="157" r="30" stroke="#A6590F"/>
+            <circle cx="112" cy="157" r="5" fill="#A6590F"/>
+          </g>
+
+          <!-- shadow figure outside (threat) -->
+          <g class="hotspot" data-key="threat" tabindex="0">
+            <circle class="ring" cx="255" cy="185" r="26" stroke="#1B3A63"/>
+            <circle cx="255" cy="168" r="8" fill="#1B3A63" opacity="0.85"/>
+            <path d="M243 200 q12 -22 24 0 z" fill="#1B3A63" opacity="0.85"/>
+          </g>
+
+          <!-- attack arrow through window -->
+          <g class="hotspot" data-key="attack" tabindex="0">
+            <circle class="ring" cx="185" cy="130" r="26" stroke="#9C2B24"/>
+            <path d="M225 118 L165 150" stroke="#9C2B24" stroke-width="3" marker-end="url(#arrowhead)"/>
+          </g>
+          <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 z" fill="#9C2B24"/>
+            </marker>
+          </defs>
+
+          <!-- countermeasure: lock on door -->
+          <g class="hotspot" data-key="cm" tabindex="0">
+            <circle class="ring" cx="167" cy="190" r="24" stroke="#256B41"/>
+            <rect x="160" y="186" width="14" height="11" rx="2" fill="#256B41"/>
+            <path d="M163 186 v-5 a4 4 0 0 1 8 0 v5" fill="none" stroke="#256B41" stroke-width="2"/>
+          </g>
+        </svg>
+
+        <div>
+          <div class="house-info" id="houseInfo">
+            <span class="house-tag vuln" id="hTag">Click a marker</span>
+            <p id="hText">The picture shows four things happening around one house at once. Click the amber, navy, red and green markers on the left, one at a time, to see how each term applies here - then read the formal definitions below.</p>
+          </div>
+          <p class="house-hint">Tip: work through them in order - amber → navy → red → green.</p>
+        </div>
+      </div>
+
+      <h3 class="sub">Formal definitions</h3>
+      <table>
+        <tr><th>Term</th><th>Plain meaning</th><th>House example</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)"><strong>Vulnerability</strong></td><td>A weakness that could be exploited</td><td>The window latch doesn't fully close</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)"><strong>Threat</strong></td><td>A potential source of harm - something that <em>could</em> happen</td><td>A burglar operating in the area</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--red)"><strong>Attack</strong></td><td>The actual attempt to exploit the weakness</td><td>The burglar climbing in through that window</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)"><strong>Countermeasure</strong></td><td>Something that reduces the weakness, blocks the threat, or limits the damage</td><td>A deadbolt, an alarm, a motion light</td></tr>
+      </table>
+
+      <div class="callout">
+        <strong>The one-line version:</strong> a threat becomes an attack only when it meets a vulnerability it can reach. Countermeasures exist to break that meeting - by removing the vulnerability, blocking the threat, or catching the attack before it does damage.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2 VULNERABILITY ===== -->
+  <section id="vulnerability" class="sec" data-accent="amber">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">02</div><h2 class="title">Vulnerability</h2></div>
+      <p class="lede">A <strong>vulnerability</strong> is a weakness in a system, process, or person that could be exploited to violate confidentiality, integrity, or availability. On its own, a vulnerability does no harm - it's just a flaw waiting for something to find it.</p>
+
+      <h3 class="sub">Where vulnerabilities come from</h3>
+      <div class="cards3">
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Design</h5><p>The blueprint itself is flawed - e.g. a protocol that sends passwords in plain text by design.</p></div>
+        <div class="mini" style="--accent-line:var(--red)"><h5>Implementation</h5><p>The design was fine, the code wasn't - e.g. a buffer overflow bug, a missing input check.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>Configuration</h5><p>The software is fine, the setup isn't - e.g. default admin password left unchanged, an open port.</p></div>
+        <div class="mini" style="--accent-line:var(--violet)"><h5>Human</h5><p>People are the weak link - e.g. susceptibility to phishing, writing passwords on sticky notes.</p></div>
+        <div class="mini" style="--accent-line:var(--green)"><h5>Process</h5><p>No procedure exists to catch the problem - e.g. no patching schedule, no offboarding checklist.</p></div>
+        <div class="mini" style="--accent-line:var(--ink)"><h5>Physical</h5><p>The real world is exploitable too - e.g. an unlocked server room, an unattended terminal.</p></div>
+      </div>
+
+      <h3 class="sub">Spot the category</h3>
+      <p>Click each scenario to reveal which kind of vulnerability it is.</p>
+      <div class="matcher" id="vulnMatcher">
+        <div class="mrow" data-cat="implementation"><span class="mtext">A web form doesn't check the length of what you type into it, so a very long input crashes the server.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="configuration"><span class="mtext">A newly installed router is still using "admin / admin" as its login.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="human"><span class="mtext">An employee opens an attachment from an email pretending to be their manager.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="design"><span class="mtext">An older wireless protocol encrypts data with a cipher that was broken years ago - even a correct implementation is exploitable.</span><span class="mtag">?</span></div>
+      </div>
+
+      <div class="callout amber">
+        <strong>Vulnerability ≠ risk.</strong> A flaw that nobody can reach and nobody knows about carries very little real-world danger yet. It becomes dangerous only once a <a href="#threat">threat</a> can reach it - which is exactly why the two terms are kept separate.
+      </div>
+
+      <p class="mono" style="font-size:13.5px; color:var(--ink-soft);">In the wild, publicly known vulnerabilities are catalogued as <strong>CVEs</strong> (Common Vulnerabilities and Exposures) and scored for severity with the <strong>CVSS</strong> scale - you'll see both again when we cover vulnerability management.</p>
+    </div>
+  </section>
+
+  <!-- ===== 3 THREAT ===== -->
+  <section id="threat" class="sec" data-accent="navy">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">03</div><h2 class="title">Threat</h2></div>
+      <p class="lede">A <strong>threat</strong> is anything that has the <em>potential</em> to cause harm to an asset by exploiting a vulnerability. A threat is not yet an event - it's a standing possibility, made of a source, a capability, and (usually) an intent.</p>
+
+      <div class="formula">threat = threat agent (who/what) + capability (can they?) + intent (do they want to?) + opportunity (can they reach it?)</div>
+
+      <h3 class="sub">Where threats come from</h3>
+      <table>
+        <tr><th>Threat source</th><th>Nature</th><th>Example</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--red)">Malicious human</td><td>Intentional</td><td>External hacker, cybercriminal, malicious insider, hacktivist, nation-state actor</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Non-malicious human</td><td>Unintentional</td><td>Careless employee, untrained contractor, someone who mis-configures a server</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Technical / environmental</td><td>Non-human, non-intentional</td><td>Hardware failure, power outage, software bug triggering on its own</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)">Natural</td><td>Non-human, non-intentional</td><td>Fire, flood, earthquake damaging the data center</td></tr>
+      </table>
+
+      <h3 class="sub">Threat, vulnerability, or risk?</h3>
+      <p>These three get mixed up constantly. Click a chip on each statement below to classify it.</p>
+
+      <div class="quizrow" data-answer="threat">
+        <p class="qstmt">"A disgruntled former employee still has valid login credentials."</p>
+        <div class="qchoices">
+          <span class="qchip" data-choice="threat">Threat</span>
+          <span class="qchip" data-choice="vulnerability">Vulnerability</span>
+          <span class="qchip" data-choice="risk">Risk</span>
+        </div>
+        <div class="qfeedback"></div>
+      </div>
+      <div class="quizrow" data-answer="vulnerability">
+        <p class="qstmt">"The offboarding process forgot to revoke that employee's account."</p>
+        <div class="qchoices">
+          <span class="qchip" data-choice="threat">Threat</span>
+          <span class="qchip" data-choice="vulnerability">Vulnerability</span>
+          <span class="qchip" data-choice="risk">Risk</span>
+        </div>
+        <div class="qfeedback"></div>
+      </div>
+      <div class="quizrow" data-answer="risk">
+        <p class="qstmt">"The likelihood and cost of that former employee logging in and deleting company files."</p>
+        <div class="qchoices">
+          <span class="qchip" data-choice="threat">Threat</span>
+          <span class="qchip" data-choice="vulnerability">Vulnerability</span>
+          <span class="qchip" data-choice="risk">Risk</span>
+        </div>
+        <div class="qfeedback"></div>
+      </div>
+
+      <div class="callout navy">
+        <strong>Rule of thumb:</strong> if you can picture it as "someone/something out there that could do X," it's a <em>threat</em>. If you can picture it as "a hole in our defenses," it's a <em>vulnerability</em>. If you're weighing how bad it would be and how likely it is, that's <em>risk</em> - see Section 7.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4 ATTACK ===== -->
+  <section id="attack" class="sec" data-accent="red">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">04</div><h2 class="title">Attack</h2></div>
+      <p class="lede">An <strong>attack</strong> is a threat put into action - a deliberate attempt to exploit a vulnerability and violate confidentiality, integrity, or availability. This is the only one of the four that is an <em>event</em>, not a standing condition.</p>
+
+      <h3 class="sub">Passive vs. active attacks</h3>
+      <div class="cards2">
+        <div class="mini" style="--accent-line:var(--navy)">
+          <h5>Passive attack</h5>
+          <p>The attacker observes or copies data without altering it - eavesdropping, traffic analysis, sniffing an unencrypted connection. Hard to detect, because nothing changes; easier to <em>prevent</em>, usually with encryption.</p>
+        </div>
+        <div class="mini" style="--accent-line:var(--red)">
+          <h5>Active attack</h5>
+          <p>The attacker changes data, systems, or availability - modification, fabrication, interruption, replay, denial of service. Easier to detect, because something breaks or changes; harder to fully prevent.</p>
+        </div>
+      </div>
+
+      <p>You met the four classic attack effects in Lecture 1 - they map neatly onto the CIA triad:</p>
+      <table>
+        <tr><th>Effect</th><th>What happens</th><th>CIA property hit</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Interception</td><td>An unauthorized party gains access to data (passive)</td><td>Confidentiality</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--red)">Interruption</td><td>An asset is destroyed or made unavailable (active)</td><td>Availability</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Modification</td><td>Data is tampered with in transit or at rest (active)</td><td>Integrity</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--violet)">Fabrication</td><td>Fake data or identity is inserted into the system (active)</td><td>Integrity / Authenticity</td></tr>
+      </table>
+
+      <h3 class="sub">Attack surface and attack vector</h3>
+      <p>Two terms you'll hear constantly: the <strong>attack surface</strong> is the total set of points where an attacker could try to get in (every open port, every input field, every employee inbox). An <strong>attack vector</strong> is the specific path actually used for one attack (a phishing email, an unpatched VPN, a stolen password).</p>
+
+      <h3 class="sub">Anatomy of an attack: the tree</h3>
+      <p>Security teams often draw an <strong>attack tree</strong>: a goal at the top, with the different ways an attacker could reach it branching below. Click a branch to see what countermeasure would close it off.</p>
+      <div class="tree">
+        <div class="tree-goal">GOAL: Steal customer database</div>
+        <div class="tree-branches">
+          <div class="leaf" data-cm="Preventive: security-awareness training + email filtering + MFA, so a stolen password alone isn't enough.">
+            <div class="lname">Phish an employee's credentials</div>
+            <div class="leaf-cm"></div>
+          </div>
+          <div class="leaf" data-cm="Preventive: patch management + vulnerability scanning to close known holes before they're used.">
+            <div class="lname">Exploit an unpatched server</div>
+            <div class="leaf-cm"></div>
+          </div>
+          <div class="leaf" data-cm="Preventive: encrypt data in transit (TLS) so intercepted traffic is unreadable.">
+            <div class="lname">Sniff unencrypted network traffic</div>
+            <div class="leaf-cm"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5 COUNTERMEASURE ===== -->
+  <section id="countermeasure" class="sec" data-accent="green">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">05</div><h2 class="title">Countermeasure</h2></div>
+      <p class="lede">A <strong>countermeasure</strong> (or <em>control</em>) is any action, device, procedure, or technique that reduces a vulnerability, blocks a threat, or limits the damage of an attack. In Lecture 4 you met the actual mechanisms - gates, guards, cryptography - that <em>implement</em> countermeasures. Here we classify them by the job they do.</p>
+
+      <h3 class="sub">Five functional types</h3>
+      <div class="cards5">
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Preventive</h5><p>Stops the attack before it happens. Locks, firewalls, MFA.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>Deterrent</h5><p>Discourages an attempt. Warning signs, visible cameras.</p></div>
+        <div class="mini" style="--accent-line:var(--red)"><h5>Detective</h5><p>Notices an attack in progress or after the fact. IDS, audit logs.</p></div>
+        <div class="mini" style="--accent-line:var(--green)"><h5>Corrective</h5><p>Fixes things once damage is found. Patches, restoring backups.</p></div>
+        <div class="mini" style="--accent-line:var(--violet)"><h5>Compensating</h5><p>An alternative safeguard when the ideal one isn't possible. E.g. extra monitoring on a system too old to patch.</p></div>
+      </div>
+
+      <div class="callout green">
+        <strong>Notice the pattern:</strong> preventive and deterrent controls act <em>before</em> an attack; detective controls act <em>during</em>; corrective and compensating controls act <em>after</em>. A mature security program needs all three time windows covered - prevention alone always eventually fails.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6 THE CHAIN ===== -->
+  <section id="chain" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">06</div><h2 class="title">The chain, and how to break it</h2></div>
+      <p class="lede">Put the four terms in a line and you get the anatomy of every security incident: a <strong>threat</strong> exploits a <strong>vulnerability</strong>, producing an <strong>attack</strong>, which causes <strong>impact</strong>. A countermeasure at <em>any</em> link breaks the whole chain.</p>
+
+      <div class="console">
+        <div class="console-label">INTERACTIVE - toggle a shield on any link, then watch the outcome</div>
+        <div class="chainflow" id="chainFlow">
+          <div class="cnode threat">THREAT</div>
+          <div class="clink">
+            <span class="arrow">→</span>
+            <button class="shieldbtn" data-link="1">shield off</button>
+          </div>
+          <div class="cnode vuln">VULNERABILITY</div>
+          <div class="clink">
+            <span class="arrow">→</span>
+            <button class="shieldbtn" data-link="2">shield off</button>
+          </div>
+          <div class="cnode attack">ATTACK</div>
+          <div class="clink">
+            <span class="arrow">→</span>
+            <button class="shieldbtn" data-link="3">shield off</button>
+          </div>
+          <div class="cnode impact">IMPACT</div>
+        </div>
+        <div class="chain-result" id="chainResult">All three links open - the incident happens in full.</div>
+      </div>
+
+      <table>
+        <tr><th>Link</th><th>What a shield there means</th><th>Example countermeasure</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Threat → Vulnerability</td><td>Keep the threat from ever reaching the weakness</td><td>Network segmentation, access control, firewalls</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Vulnerability → Attack</td><td>Remove the weakness itself, so there's nothing to exploit</td><td>Patching, secure coding, configuration hardening</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--red)">Attack → Impact</td><td>Catch the attack in progress and limit the damage</td><td>Intrusion detection, backups, incident response</td></tr>
+      </table>
+
+      <div class="callout">
+        <strong>Two ways to have zero risk:</strong> no vulnerability (nothing to exploit, even with threats circling) or no threat (nobody trying, even with holes wide open). In practice you rarely get either for free - which is why real security programs stack shields across <em>all three</em> links rather than betting on one.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7 RISK ===== -->
+  <section id="risk" class="sec" data-accent="violet">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">07</div><h2 class="title">Risk: putting a number on it</h2></div>
+      <p class="lede"><strong>Risk</strong> is what you get once you combine how likely an attack is with how bad it would be. It's the quantity that actually drives decisions - you can't defend against everything, so you defend against the highest risk first.</p>
+
+      <div class="formula">Risk ≈ Likelihood ( Threat level × Vulnerability severity ) × Impact</div>
+
+      <h3 class="sub">Try it</h3>
+      <div class="console">
+        <div class="console-label">INTERACTIVE - risk calculator</div>
+        <div class="riskcalc">
+          <div>
+            <div class="rslider">
+              <label>Threat level <span class="rval" id="tVal">3</span></label>
+              <input type="range" min="1" max="5" value="3" id="tSlider">
+            </div>
+            <div class="rslider">
+              <label>Vulnerability severity <span class="rval" id="vVal">3</span></label>
+              <input type="range" min="1" max="5" value="3" id="vSlider">
+            </div>
+            <div class="rslider">
+              <label>Impact if it happens <span class="rval" id="iVal">3</span></label>
+              <input type="range" min="1" max="5" value="3" id="iSlider">
+            </div>
+          </div>
+          <div class="riskresult">
+            <div class="rband" id="riskBand">MEDIUM</div>
+            <div class="rscore" id="riskScore">score: 27 / 125</div>
+            <div class="rbar"><div class="rbar-fill" id="riskBarFill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <p>Real programs usually keep this qualitative rather than doing literal multiplication - a 5×5 <strong>risk matrix</strong> (likelihood rows, impact columns) is the classic version, with each cell coloured from green ("accept") to red ("must fix now"). The slider above is a simplified stand-in for that same judgement.</p>
+
+      <div class="callout" style="border-color:var(--violet); background:var(--violet-fill);">
+        <strong>Why bother?</strong> No organisation can patch every vulnerability or watch every threat with equal urgency. Turning threat, vulnerability and impact into a comparable risk score is what lets a security team say "fix this one first" with a straight face.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8 LIFECYCLE ===== -->
+  <section id="lifecycle" class="sec" data-accent="navy">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">08</div><h2 class="title">The assurance lifecycle</h2></div>
+      <p class="lede"><strong>Security assurance</strong> is the confidence that a system actually meets its security requirements - and confidence isn't a one-time checkbox, it's a loop you run continuously as threats, vulnerabilities and systems all keep changing.</p>
+
+      <div class="cycle-wrap">
+        <svg viewBox="0 0 300 300" aria-hidden="true">
+          <circle cx="150" cy="150" r="108" fill="none" stroke="#C6CCC1" stroke-width="2" stroke-dasharray="3 6"/>
+          <text x="150" y="146" text-anchor="middle" class="cycle-center">continuous</text>
+          <text x="150" y="162" text-anchor="middle" class="cycle-center">assurance loop</text>
+
+          <!-- Identify -->
+          <circle cx="150" cy="42" r="34" fill="#E3EBF5" stroke="#1B3A63" stroke-width="2.5"/>
+          <text x="150" y="38" text-anchor="middle" class="cycle-label">Identify</text>
+          <text x="150" y="52" text-anchor="middle" class="cycle-sub">assets &amp; threats</text>
+
+          <!-- Assess -->
+          <circle cx="258" cy="150" r="34" fill="#F9ECD8" stroke="#A6590F" stroke-width="2.5"/>
+          <text x="258" y="146" text-anchor="middle" class="cycle-label">Assess</text>
+          <text x="258" y="160" text-anchor="middle" class="cycle-sub">vulnerabilities &amp; risk</text>
+
+          <!-- Mitigate -->
+          <circle cx="150" cy="258" r="34" fill="#E3F1E8" stroke="#256B41" stroke-width="2.5"/>
+          <text x="150" y="254" text-anchor="middle" class="cycle-label">Mitigate</text>
+          <text x="150" y="268" text-anchor="middle" class="cycle-sub">apply countermeasures</text>
+
+          <!-- Monitor -->
+          <circle cx="42" cy="150" r="34" fill="#F8E5E3" stroke="#9C2B24" stroke-width="2.5"/>
+          <text x="42" y="146" text-anchor="middle" class="cycle-label">Monitor</text>
+          <text x="42" y="160" text-anchor="middle" class="cycle-sub">watch for attacks</text>
+
+          <path d="M178 55 A115 115 0 0 1 246 122" fill="none" stroke="#8E9384" stroke-width="2" marker-end="url(#arrowg)"/>
+          <path d="M246 178 A115 115 0 0 1 178 245" fill="none" stroke="#8E9384" stroke-width="2" marker-end="url(#arrowg)"/>
+          <path d="M122 245 A115 115 0 0 1 54 178" fill="none" stroke="#8E9384" stroke-width="2" marker-end="url(#arrowg)"/>
+          <path d="M54 122 A115 115 0 0 1 122 55" fill="none" stroke="#8E9384" stroke-width="2" marker-end="url(#arrowg)"/>
+          <defs>
+            <marker id="arrowg" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 z" fill="#8E9384"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <table>
+        <tr><th>Stage</th><th>Question it answers</th><th>Feeds into</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Identify</td><td>What do we have, and who might want to harm it?</td><td>Asset inventory + threat list</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Assess</td><td>Where are we weak, and how bad would it be?</td><td>Vulnerability scan + risk rating</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)">Mitigate</td><td>What do we do about the risks we can't accept?</td><td>Countermeasures deployed</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--red)">Monitor</td><td>Is it working, and has anything changed?</td><td>Logs, alerts - feeds back into Identify</td></tr>
+      </table>
+
+      <p class="mono" style="font-size:13.5px; color:var(--ink-soft);">This loop is the shared skeleton behind formal frameworks you'll meet later in the module - <strong>NIST's Risk Management Framework</strong>, <strong>ISO/IEC 27001</strong>'s plan-do-check-act cycle, and <strong>OWASP's</strong> application-level guidance all follow roughly this same identify → assess → mitigate → monitor shape.</p>
+    </div>
+  </section>
+
+  <!-- ===== 9 WORKED EXAMPLE ===== -->
+  <section id="example" class="sec" data-accent="amber">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">09</div><h2 class="title">Worked example: the login page</h2></div>
+      <p class="lede">Let's run one realistic scenario through every stage, start to finish.</p>
+
+      <div class="timeline">
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--ink)">A</div>
+          <div class="tl-card" style="--step-accent:var(--ink)">
+            <div class="tl-num">ASSET</div>
+            <p>Customer credentials and the funds behind them, on an online banking login page.</p>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--amber)">V</div>
+          <div class="tl-card" style="--step-accent:var(--amber)">
+            <div class="tl-num">VULNERABILITY</div>
+            <p>The login form has no limit on failed attempts.</p>
+            <p class="tl-detail">Category: implementation flaw - nothing stops a script from trying thousands of passwords a minute.</p>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--navy)">T</div>
+          <div class="tl-card" style="--step-accent:var(--navy)">
+            <div class="tl-num">THREAT</div>
+            <p>A financially motivated attacker running automated credential-stuffing tools.</p>
+            <p class="tl-detail">Capability: yes (freely available tools). Intent: yes (financial gain). Opportunity: yes (the form is public).</p>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--red)">A</div>
+          <div class="tl-card" style="--step-accent:var(--red)">
+            <div class="tl-num">ATTACK</div>
+            <p>A brute-force / credential-stuffing attack against the login endpoint - an active attack aimed at confidentiality and, indirectly, integrity of the account.</p>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--ink)">I</div>
+          <div class="tl-card" style="--step-accent:var(--ink)">
+            <div class="tl-num">IMPACT</div>
+            <p>Account takeover, stolen funds, breach notification costs, reputational damage.</p>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--green)">C</div>
+          <div class="tl-card" style="--step-accent:var(--green)">
+            <div class="tl-num">COUNTERMEASURES</div>
+            <p>Rate limiting, account lockout, CAPTCHA and MFA (preventive) · login-attempt monitoring and alerts (detective) · forced password resets after a suspected breach (corrective).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout amber">
+        Notice this is exactly the chain from Section 6, walked end-to-end on a real system - and the countermeasures at the bottom are deliberately spread across all three links, not stacked on just one.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 10 SELF-TEST ===== -->
+  <section id="selftest" class="sec" data-accent="green">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">10</div><h2 class="title">Quick self-test</h2></div>
+      <p class="lede">Try to answer before you open each one.</p>
+
+      <details class="qa">
+        <summary>Q1. A company's firewall is misconfigured to allow all inbound traffic. Is this a threat or a vulnerability?</summary>
+        <p class="a">A vulnerability. It's a weakness in the defenses. The threat would be whoever might try to use that open door - a scanning bot, an opportunistic attacker, and so on.</p>
+      </details>
+      <details class="qa">
+        <summary>Q2. Give one example each of a preventive and a detective countermeasure for the same vulnerability: an unpatched server.</summary>
+        <p class="a">Preventive: apply the patch (removes the vulnerability entirely). Detective: run vulnerability scans / intrusion detection that flags exploitation attempts against that server while it remains unpatched.</p>
+      </details>
+      <details class="qa">
+        <summary>Q3. Why is a vulnerability with no known threat still worth tracking?</summary>
+        <p class="a">Because threats change constantly - new attacker groups, new automated tools, new motivations appear all the time. A vulnerability that's "safe" today because nobody is targeting it can become high-risk overnight once a threat actor notices it.</p>
+      </details>
+      <details class="qa">
+        <summary>Q4. Sort this into passive or active: an attacker silently copies encrypted traffic to analyse later, without altering anything in transit.</summary>
+        <p class="a">Passive - nothing in the system is changed, only observed/copied. It's precisely why encryption is the standard countermeasure: it can't stop the copying, but it can make the copy useless.</p>
+      </details>
+      <details class="qa">
+        <summary>Q5. Two systems have identical vulnerabilities. System A holds public marketing brochures; System B holds medical records. Do they carry the same risk?</summary>
+        <p class="a">No. Threat and vulnerability may be identical, but <em>impact</em> differs hugely, so risk differs hugely too - this is exactly why risk always needs all three inputs, not just "is there a hole."</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===== 11 RECAP ===== -->
+  <section id="recap" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">11</div><h2 class="title">Recap &amp; glossary</h2></div>
+
+      <h3 class="sub">Take this away</h3>
+      <ul style="max-width:66ch; font-size:15.5px;">
+        <li>A <strong>vulnerability</strong> is a weakness; a <strong>threat</strong> is a potential danger; an <strong>attack</strong> is that danger acted out against that weakness; a <strong>countermeasure</strong> pushes back at any of those three stages.</li>
+        <li>Risk needs all three inputs - threat, vulnerability, and impact - not just one.</li>
+        <li>Break the chain at any link and the incident doesn't happen - layer countermeasures across all links, don't bet on one.</li>
+        <li>Assurance isn't a one-off audit - it's a loop: identify, assess, mitigate, monitor, repeat.</li>
+      </ul>
+
+      <h3 class="sub">Glossary</h3>
+      <dl class="glossary">
+        <dt>Asset</dt><dd>Anything of value worth protecting - data, systems, people, reputation.</dd>
+        <dt>Vulnerability</dt><dd>A weakness in design, implementation, configuration, process, or people that could be exploited.</dd>
+        <dt>Threat</dt><dd>A potential source of harm - an agent with the capability, intent and opportunity to exploit a vulnerability.</dd>
+        <dt>Threat agent / actor</dt><dd>The specific person, group, or force behind a threat.</dd>
+        <dt>Attack</dt><dd>A deliberate attempt to exploit a vulnerability and violate confidentiality, integrity, or availability.</dd>
+        <dt>Attack vector</dt><dd>The specific path used to carry out one attack.</dd>
+        <dt>Attack surface</dt><dd>The complete set of points an attacker could potentially use to get in.</dd>
+        <dt>Countermeasure / control</dt><dd>An action, device, procedure or technique that reduces a vulnerability, blocks a threat, or limits an attack's impact.</dd>
+        <dt>Risk</dt><dd>The combination of likelihood (threat × vulnerability) and impact - the quantity that drives prioritisation.</dd>
+        <dt>Assurance</dt><dd>Confidence, built through continuous identify-assess-mitigate-monitor cycles, that a system meets its security requirements.</dd>
+      </dl>
+
+      <div class="activity">
+        <h4>Before next lecture</h4>
+        <p style="max-width:none;">Pick any app or device you use daily. Write down one real vulnerability it might have, one realistic threat that could exploit it, what the resulting attack would look like, and one countermeasure at each link of the chain. Bring it to class.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>DS5105 · Information Security - Lecture 5 · Security Assurance Models</footer>
+
+<script>
+  // Checkpoint nav active-state on scroll
+  const cps = Array.from(document.querySelectorAll('.cp'));
+  const secs = cps.map(cp => document.querySelector(cp.getAttribute('href')));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const idx = secs.indexOf(entry.target);
+      if (idx === -1) return;
+      if (entry.isIntersecting) {
+        cps.forEach(cp => cp.classList.remove('active'));
+        cps[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  secs.forEach(sec => sec && io.observe(sec));
+
+  // House hotspot diagram
+  const houseInfo = {
+    vuln: { tag: 'Vulnerability', cls: 'vuln', text: 'The window latch doesn\u2019t fully close. It has been like that for months and nobody has fixed it. On its own this weakness harms no one \u2014 it is simply waiting.' },
+    threat: { tag: 'Threat', cls: 'threat', text: 'A burglar is known to be active in the neighbourhood. They have the skill and the motive to break in \u2014 they just haven\u2019t acted yet. This is the potential danger.' },
+    attack: { tag: 'Attack', cls: 'attack', text: 'The burglar notices the loose latch and climbs through the window. The threat has now met the vulnerability \u2014 this is the actual event, the attack.' },
+    cm: { tag: 'Countermeasure', cls: 'cm', text: 'A deadbolt on the door, a fixed latch, a motion-sensor light, a dog. Any of these could have broken the chain \u2014 by removing the weakness, deterring the burglar, or catching the attempt.' }
+  };
+  const hTag = document.getElementById('hTag');
+  const hText = document.getElementById('hText');
+  document.querySelectorAll('.hotspot').forEach(spot => {
+    spot.addEventListener('click', () => {
+      document.querySelectorAll('.hotspot').forEach(s => s.classList.remove('active'));
+      spot.classList.add('active');
+      const key = spot.getAttribute('data-key');
+      const d = houseInfo[key];
+      hTag.className = 'house-tag ' + d.cls;
+      hTag.textContent = d.tag;
+      hText.textContent = d.text;
+    });
+    spot.addEventListener('keypress', (e) => { if (e.key === 'Enter') spot.click(); });
+  });
+
+  // Vulnerability category matcher
+  document.querySelectorAll('#vulnMatcher .mrow').forEach(row => {
+    row.addEventListener('click', () => {
+      if (row.classList.contains('revealed')) return;
+      row.classList.add('revealed');
+      row.querySelector('.mtag').textContent = row.getAttribute('data-cat');
+    });
+  });
+
+  // Threat/Vulnerability/Risk quiz
+  document.querySelectorAll('.quizrow').forEach(q => {
+    const answer = q.getAttribute('data-answer');
+    const chips = q.querySelectorAll('.qchip');
+    const fb = q.querySelector('.qfeedback');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (q.classList.contains('done')) return;
+        const choice = chip.getAttribute('data-choice');
+        chips.forEach(c => c.classList.remove('correct', 'wrong'));
+        if (choice === answer) {
+          chip.classList.add('correct');
+          fb.textContent = 'Correct.';
+          q.classList.add('done');
+        } else {
+          chip.classList.add('wrong');
+          q.querySelector('[data-choice="' + answer + '"]').classList.add('correct');
+          fb.textContent = 'Not quite \u2014 correct answer highlighted.';
+          q.classList.add('done');
+        }
+      });
+    });
+  });
+
+  // Attack tree leaves
+  document.querySelectorAll('.leaf').forEach(leaf => {
+    leaf.addEventListener('click', () => {
+      const open = leaf.classList.toggle('open');
+      const cmBox = leaf.querySelector('.leaf-cm');
+      if (open) cmBox.textContent = leaf.getAttribute('data-cm');
+    });
+  });
+
+  // Chain breaker
+  const shields = document.querySelectorAll('.shieldbtn');
+  const chainResult = document.getElementById('chainResult');
+  function updateChain() {
+    const states = Array.from(shields).map(s => s.classList.contains('on'));
+    const [t1, t2, t3] = states;
+    if (t1) {
+      chainResult.textContent = 'Threat blocked before it ever reaches the vulnerability \u2014 no incident.';
+      chainResult.classList.add('safe');
+    } else if (t2) {
+      chainResult.textContent = 'Vulnerability removed \u2014 the threat has nothing to exploit. No incident.';
+      chainResult.classList.add('safe');
+    } else if (t3) {
+      chainResult.textContent = 'Attack detected and contained before real impact. Damage limited.';
+      chainResult.classList.add('safe');
+    } else {
+      chainResult.textContent = 'All three links open \u2014 the incident happens in full.';
+      chainResult.classList.remove('safe');
+    }
+  }
+  shields.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const on = btn.classList.toggle('on');
+      btn.textContent = on ? 'shield on' : 'shield off';
+      updateChain();
+    });
+  });
+
+  // Risk calculator
+  const tSlider = document.getElementById('tSlider'), vSlider = document.getElementById('vSlider'), iSlider = document.getElementById('iSlider');
+  const tVal = document.getElementById('tVal'), vVal = document.getElementById('vVal'), iVal = document.getElementById('iVal');
+  const riskBand = document.getElementById('riskBand'), riskScore = document.getElementById('riskScore'), riskBarFill = document.getElementById('riskBarFill');
+  function updateRisk() {
+    const t = parseInt(tSlider.value, 10), v = parseInt(vSlider.value, 10), i = parseInt(iSlider.value, 10);
+    tVal.textContent = t; vVal.textContent = v; iVal.textContent = i;
+    const score = t * v * i;
+    const max = 125;
+    const pct = Math.round((score / max) * 100);
+    riskScore.textContent = 'score: ' + score + ' / ' + max;
+    riskBarFill.style.width = pct + '%';
+    let band, color;
+    if (score <= 12) { band = 'LOW'; color = '#256B41'; }
+    else if (score <= 36) { band = 'MEDIUM'; color = '#A6590F'; }
+    else if (score <= 75) { band = 'HIGH'; color = '#9C2B24'; }
+    else { band = 'CRITICAL'; color = '#5A3E86'; }
+    riskBand.textContent = band;
+    riskBand.style.color = color;
+    riskBarFill.style.background = color;
+  }
+  [tSlider, vSlider, iSlider].forEach(s => s.addEventListener('input', updateRisk));
+  updateRisk();
+</script>
+</body>
+</html>
