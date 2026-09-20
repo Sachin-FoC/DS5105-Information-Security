@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Implementation Mechanisms — DS5105</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700;8..60,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECEEE6;
+    --panel:#F5F6F0;
+    --ink:#14171B;
+    --ink-soft:#4B5058;
+    --line:#C6CCC1;
+    --navy:#1B3A63;   --navy-fill:#E3EBF5;
+    --amber:#A6590F;  --amber-fill:#F9ECD8;
+    --green:#256B41;  --green-fill:#E3F1E8;
+    --red:#9C2B24;    --red-fill:#F8E5E3;
+    --violet:#5A3E86; --violet-fill:#EEE8F6;
+    --serif:"Source Serif 4", Georgia, serif;
+    --sans:"Inter", sans-serif;
+    --mono:"IBM Plex Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:17.5px; line-height:1.65;}
+  ::selection{background:var(--ink); color:var(--paper);}
+  h1,h2,h3{font-family:var(--serif); font-weight:700; margin:0; color:var(--ink);}
+  p{margin:0 0 14px; max-width:72ch;}
+  a{color:var(--navy);}
+  strong{color:var(--ink); font-weight:700;}
+  .mono{font-family:var(--mono);}
+
+  /* ================= HERO ================= */
+  .hero{ background:var(--ink); color:#EEEFE9; padding:56px 0 0; position:relative; overflow:hidden;}
+  .hero-inner{ max-width:1200px; margin:0 auto; padding:0 5vw 44px; display:grid; grid-template-columns:1.5fr 1fr; gap:48px; align-items:center;}
+  .hero-code{ display:inline-flex; align-items:center; gap:10px; margin-bottom:18px;}
+  .hero-code .chip{ font-family:var(--mono); font-size:13px; font-weight:600; border:1.5px solid #9FA593; padding:4px 10px; color:#EEEFE9;}
+  .hero-code .label{ font-family:var(--mono); font-size:13px; color:#B7BCAC; letter-spacing:.02em;}
+  .hero h1{ color:#F6F6F0; font-size:clamp(32px,4.4vw,54px); line-height:1.08; max-width:14ch;}
+  .hero .sub{ color:#C7CBBD; font-size:17px; margin-top:16px; max-width:52ch;}
+  .badge-wrap{ display:flex; justify-content:center;}
+  .badge-wrap svg{ width:100%; max-width:280px; height:auto;}
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  #heroLED{ animation:pulse 2.6s ease-in-out infinite; transform-origin:center;}
+  @media (prefers-reduced-motion:reduce){ #heroLED{ animation:none; } }
+
+  /* checkpoint path nav */
+  .checkpoints{ background:var(--ink); border-top:1px solid #33383A; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .cp-track{ max-width:1200px; margin:0 auto; padding:0 5vw; display:flex; align-items:center; min-width:max-content;}
+  .cp{ display:flex; align-items:center; gap:9px; text-decoration:none; padding:14px 16px 14px 0; position:relative; white-space:nowrap;}
+  .cp:not(:last-child)::after{ content:""; width:26px; height:1px; background:#3C4142; margin:0 2px;}
+  .cp-num{ width:24px; height:24px; border-radius:50%; border:1.5px solid var(--dot,#8E9384); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; color:#EEEFE9; flex-shrink:0; transition:background .15s ease;}
+  .cp-label{ font-family:var(--sans); font-size:13.5px; color:#9BA091; transition:color .15s ease;}
+  .cp.active .cp-num{ background:var(--dot,#8E9384); color:var(--ink);}
+  .cp.active .cp-label{ color:#F0F1EA;}
+  .cp[data-accent="navy"]{ --dot:#6E9CD1;}
+  .cp[data-accent="amber"]{ --dot:#E0A05D;}
+  .cp[data-accent="green"]{ --dot:#6FBE8F;}
+  .cp[data-accent="violet"]{ --dot:#B39BDD;}
+  .cp[data-accent="ink"]{ --dot:#B9BEB1;}
+
+  /* ================= SECTIONS ================= */
+  main{ max-width:1200px; margin:0 auto;}
+  .sec{ position:relative; padding:64px 5vw; border-bottom:1px solid var(--line);}
+  .sec::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--accent-line, var(--ink));}
+  .sec[data-accent="navy"]{ --accent-line:var(--navy); background:color-mix(in srgb, var(--navy-fill) 45%, var(--paper));}
+  .sec[data-accent="amber"]{ --accent-line:var(--amber); background:color-mix(in srgb, var(--amber-fill) 45%, var(--paper));}
+  .sec[data-accent="green"]{ --accent-line:var(--green); background:color-mix(in srgb, var(--green-fill) 45%, var(--paper));}
+  .sec[data-accent="violet"]{ --accent-line:var(--violet); background:color-mix(in srgb, var(--violet-fill) 45%, var(--paper));}
+  .sec[data-accent="ink"]{ --accent-line:var(--ink); background:var(--paper);}
+  .sec-inner{ max-width:900px; margin:0 auto;}
+
+  .sec-head{ display:flex; align-items:center; gap:18px; margin-bottom:20px;}
+  .sec-badge{ width:52px; height:52px; border-radius:50%; border:2px solid var(--accent-line); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:16px; font-weight:600; color:var(--accent-line); flex-shrink:0; background:var(--panel);}
+  h2.title{ font-size:clamp(23px,2.4vw,30px); line-height:1.2;}
+  h3.sub{ font-family:var(--serif); font-weight:700; font-size:19px; margin:28px 0 10px;}
+  .lede{ font-size:17.5px; color:var(--ink-soft); max-width:66ch;}
+
+  /* ---------- diagram system (light, schematic) ---------- */
+  .diagram{ background:var(--panel); border:1.5px solid var(--line); padding:22px 24px; margin:20px 0;}
+  .dlabel{ font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-bottom:12px;}
+  .dstack{ display:flex; flex-direction:column; align-items:center; max-width:640px; margin:0 auto;}
+  .dbox{ width:100%; border:2px solid var(--navy); background:var(--navy-fill); color:var(--ink);
+    padding:11px 16px; font-weight:600; font-size:15px; text-align:center;}
+  .dbox.amber{ border-color:var(--amber); background:var(--amber-fill);}
+  .dbox.green{ border-color:var(--green); background:var(--green-fill);}
+  .dbox.violet{ border-color:var(--violet); background:var(--violet-fill);}
+  .dbox.red{ border-color:var(--red); background:var(--red-fill); color:var(--red);}
+  .dbox.dark{ border-color:var(--ink); background:var(--ink); color:#fff;}
+  .darrow{ font-size:20px; line-height:1; color:var(--ink-soft); font-weight:700; margin:2px 0;}
+  .dbranch{ display:flex; gap:14px; width:100%;}
+  .dbranch .dbox{ flex:1;}
+  .dhoriz{ display:flex; align-items:stretch; gap:0; flex-wrap:wrap; justify-content:center;}
+  .dhoriz .dbox{ width:auto; min-width:112px;}
+  .dhoriz .darrow{ display:flex; align-items:center; padding:0 10px; margin:0;}
+
+  /* ---------- console / interactive panels (light, tactile) ---------- */
+  .console{ background:var(--panel); color:var(--ink); border:1.5px solid var(--line); padding:26px 28px; margin:22px 0;}
+  .console-label{ font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-bottom:16px; display:flex; align-items:center; gap:8px;}
+  .console-label::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0;}
+  .console .stack-layers{ display:flex; flex-direction:column; align-items:center; max-width:560px; margin:0 auto;}
+  .layerbtn{ all:unset; cursor:pointer; width:100%; display:block; box-sizing:border-box;}
+  .layerbox{ width:100%; border:1.5px solid var(--line); background:#fff; color:var(--ink); padding:11px 16px; font-weight:600; font-size:14.5px; text-align:center; font-family:var(--mono); transition:opacity .2s ease, background .2s ease, border-color .2s ease;}
+  .layerbtn:hover .layerbox{ border-color:var(--green);}
+  .layerbtn.down .layerbox{ opacity:.6; text-decoration:line-through; background:var(--red-fill); border-color:var(--red); color:var(--red);}
+  .layer-arrow{ font-size:16px; color:var(--ink-soft); margin:2px 0;}
+  .stackresult{ margin-top:16px; padding:12px 16px; font-family:var(--mono); font-size:13.5px; font-weight:600; border:1.5px solid var(--green); background:var(--green-fill); color:var(--green); text-align:center;}
+  .stackresult.exposed{ border-color:var(--red); background:var(--red-fill); color:var(--red);}
+  .resetbtn{ margin-top:12px; font-family:var(--mono); font-size:12px; background:none; border:none; color:var(--ink-soft); text-decoration:underline; cursor:pointer; padding:0; display:block; margin-left:auto; margin-right:auto;}
+
+  /* ---------- static physical/logical pair ---------- */
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0;}
+  .pcard{ border:2px solid var(--navy); padding:16px 18px; background:var(--panel);}
+  .pcard.logical{ border-color:var(--amber);}
+  .pcard h4{ font-family:var(--mono); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--navy); margin:0 0 8px; font-weight:700;}
+  .pcard.logical h4{ color:var(--amber);}
+  .pcard ul{ margin:0; padding-left:18px; font-size:14.5px;}
+  .pcard li{ margin-bottom:5px;}
+
+  .callout{ border-left:5px solid var(--ink); background:var(--panel); padding:14px 18px; margin:20px 0; font-size:15.5px; max-width:none;}
+
+  .cards3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0;}
+  .mini{ border:1.5px solid var(--line); padding:14px 16px; background:var(--panel); border-top:3px solid var(--accent-line, var(--green));}
+  .mini h5{ font-family:var(--mono); font-size:12px; text-transform:uppercase; margin:0 0 6px; color:var(--accent-line, var(--green)); font-weight:700;}
+  .mini p{ font-size:14px; margin:0; max-width:none;}
+
+  table{ width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+  th{ background:var(--accent-line, var(--navy)); color:#fff; text-align:left; padding:10px 12px; font-family:var(--mono); font-size:11.5px; text-transform:uppercase; font-weight:600;}
+  td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:nth-child(even) td{ background:rgba(0,0,0,0.02);}
+  td.tick{ border-left:4px solid var(--row-accent, var(--line));}
+
+  .formula{ font-family:var(--mono); font-size:14.5px; background:var(--panel); border-left:5px solid var(--accent-line, var(--green)); padding:14px 18px; margin:16px 0; line-height:1.9; max-width:none;}
+
+  /* ---------- demo internals ---------- */
+  .demo-grid{ display:grid; grid-template-columns:200px 1fr; gap:32px; align-items:center;}
+  .demo-grid svg{ width:100%; height:auto;}
+  .status-line{ display:flex; align-items:center; gap:8px; margin-top:12px; font-family:var(--mono); font-weight:600; font-size:13px;}
+  .light{ width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:#D8D0BA; box-shadow:0 0 0 rgba(0,0,0,0);}
+  .light.go{ background:var(--green); border-color:var(--green); box-shadow:0 0 8px rgba(37,107,65,.45);}
+  .light.stop{ background:var(--red); border-color:var(--red); box-shadow:0 0 8px rgba(156,43,36,.45);}
+  #badgeIcon{ transform:translateY(-36px); opacity:0;}
+  #badgeIcon.scan-anim{ animation:badgeSlide .9s ease forwards;}
+  @keyframes badgeSlide{ 0%{transform:translateY(-36px);opacity:0;} 40%{opacity:1;} 70%{transform:translateY(5px);} 100%{transform:translateY(0);opacity:1;} }
+  button.action{ font-family:var(--mono); font-size:13.5px; font-weight:600; letter-spacing:.02em; background:var(--green); color:#fff;
+    border:none; padding:12px 20px; cursor:pointer; transition:background .2s ease;}
+  button.action:hover{ background:var(--ink);}
+  #guardStatus,#gateStatus{ font-size:14px; color:var(--ink-soft); min-height:24px; margin-top:8px;}
+
+  .cipher input[type=text]{ width:100%; font-family:var(--mono); font-size:15.5px; padding:10px 12px; background:#fff; border:1.5px solid var(--line); color:var(--ink); margin-bottom:14px;}
+  .slide-row{ display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .slide-row input[type=range]{ flex:1; accent-color:var(--green);}
+  .shift{ font-family:var(--mono); border:2px solid var(--green); color:var(--green); padding:2px 9px; min-width:26px; text-align:center; font-weight:700;}
+  .cipher-out{ font-family:var(--mono); font-size:18px; word-break:break-all; background:var(--green-fill); border-left:5px solid var(--green); color:var(--green); padding:14px 16px; font-weight:600;}
+
+  .stego{ display:grid; grid-template-columns:auto 1fr; gap:26px; align-items:center;}
+  #stegoCanvas{ border:1.5px solid var(--line); image-rendering:pixelated;}
+  .stego .cap{ font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-top:8px;}
+
+  /* ---------- cycle diagram (controls) ---------- */
+  .cycle-wrap{ display:flex; justify-content:center; margin:20px 0;}
+  .cycle-wrap svg{ width:100%; max-width:320px; height:auto;}
+  .cycle-label{ font-family:var(--sans); font-size:13px; font-weight:600; fill:var(--ink);}
+  .cycle-center{ font-family:var(--mono); font-size:11px; fill:var(--ink-soft);}
+
+  /* ---------- hospital timeline ---------- */
+  .timeline{ position:relative; margin:26px 0 10px; padding-left:34px;}
+  .timeline::before{ content:""; position:absolute; left:13px; top:6px; bottom:6px; width:2px; background:var(--line);}
+  .tl-step{ position:relative; padding-bottom:26px;}
+  .tl-step:last-child{ padding-bottom:0;}
+  .tl-dot{ position:absolute; left:-34px; top:0; width:28px; height:28px; border-radius:50%; background:var(--panel); border:2px solid var(--step-accent, var(--navy)); display:flex; align-items:center; justify-content:center;}
+  .tl-dot svg{ width:15px; height:15px;}
+  .tl-card{ border:1.5px solid var(--line); background:var(--panel); border-left:4px solid var(--step-accent, var(--navy)); padding:12px 16px;}
+  .tl-card .tl-num{ font-family:var(--mono); font-size:11px; color:var(--step-accent, var(--navy)); font-weight:700; letter-spacing:.03em;}
+  .tl-card p{ margin:2px 0 0; font-size:15px; font-weight:600; max-width:none;}
+
+  dl.glossary dt{ font-family:var(--mono); font-weight:700; margin-top:14px; color:var(--navy); font-size:15px;}
+  dl.glossary dd{ margin:3px 0 0;}
+
+  .activity{ border:1.5px dashed var(--navy); background:var(--navy-fill); padding:20px 22px; margin-top:20px;}
+  .activity h4{ font-family:var(--mono); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--navy); margin:0 0 10px; font-weight:700;}
+
+  details.qa{ border:1.5px solid var(--line); background:var(--panel); padding:13px 17px; margin-bottom:8px;}
+  details.qa summary{ cursor:pointer; font-family:var(--mono); font-size:13.5px; font-weight:600; color:var(--ink);}
+  details.qa .a{ margin-top:8px; font-size:15px; max-width:none;}
+
+  footer{ background:var(--ink); color:#9BA091; padding:26px 5vw; font-family:var(--mono); font-size:11.5px; text-align:center;}
+
+  @media (max-width:760px){
+    .hero-inner{ grid-template-columns:1fr; text-align:left;}
+    .badge-wrap{ order:-1; max-width:200px;}
+    .pair, .cards3, .demo-grid, .stego{ grid-template-columns:1fr;}
+    .dbranch{ flex-direction:column;}
+    .sec{ padding:48px 6vw;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-code"><span class="chip">DS5105</span><span class="label">Information Security — Lecture Note</span></div>
+      <h1>Security Implementation Mechanisms</h1>
+      <p class="sub">Gates, guards, cryptography, and steganography: the actual things you build to enforce a security rule, with the diagrams and demonstrations to go with them.</p>
+    </div>
+    <div class="badge-wrap">
+      <svg viewBox="0 0 220 300" aria-hidden="true">
+        <rect x="4" y="4" width="212" height="292" rx="14" fill="#1C2023" stroke="#4A5158" stroke-width="2"/>
+        <circle cx="110" cy="30" r="6" fill="#0F1210" stroke="#4A5158" stroke-width="2"/>
+        <rect x="30" y="52" width="160" height="90" fill="#262B2E" stroke="#4A5158" stroke-width="1.5"/>
+        <path d="M110 76 a20 20 0 1 0 0.01 0" fill="none" stroke="#8FDCAC" stroke-width="4"/>
+        <rect x="95" y="93" width="30" height="24" rx="3" fill="none" stroke="#8FDCAC" stroke-width="4"/>
+        <rect x="30" y="154" width="100" height="10" fill="#4A5158"/>
+        <rect x="30" y="170" width="140" height="8" fill="#33383A"/>
+        <rect x="30" y="184" width="80" height="8" fill="#33383A"/>
+        <circle id="heroLED" cx="185" cy="160" r="7" fill="#6FBE8F"/>
+        <text x="110" y="222" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#E7E8E1" font-weight="600">CLEARANCE</text>
+        <text x="110" y="242" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8FDCAC">ACCESS GRANTED</text>
+        <rect x="20" y="262" width="180" height="18" fill="#0F1210"/>
+      </svg>
+    </div>
+  </div>
+  <nav class="checkpoints" aria-label="Lecture sections">
+    <div class="cp-track" id="cpTrack">
+      <a href="#mechanisms" class="cp" data-accent="ink"><span class="cp-num">1</span><span class="cp-label">Mechanisms</span></a>
+      <a href="#depth" class="cp" data-accent="navy"><span class="cp-num">2</span><span class="cp-label">Defense in depth</span></a>
+      <a href="#gates" class="cp" data-accent="navy"><span class="cp-num">3</span><span class="cp-label">Gates</span></a>
+      <a href="#guards" class="cp" data-accent="amber"><span class="cp-num">4</span><span class="cp-label">Guards</span></a>
+      <a href="#controls" class="cp" data-accent="ink"><span class="cp-num">5</span><span class="cp-label">Control types</span></a>
+      <a href="#crypto" class="cp" data-accent="green"><span class="cp-num">6</span><span class="cp-label">Cryptography</span></a>
+      <a href="#stego" class="cp" data-accent="violet"><span class="cp-num">7</span><span class="cp-label">Steganography</span></a>
+      <a href="#together" class="cp" data-accent="navy"><span class="cp-num">8</span><span class="cp-label">Putting it together</span></a>
+      <a href="#principles" class="cp" data-accent="amber"><span class="cp-num">9</span><span class="cp-label">Principles</span></a>
+      <a href="#recap" class="cp" data-accent="ink"><span class="cp-num">10</span><span class="cp-label">Recap</span></a>
+    </div>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ===== 1 MECHANISMS ===== -->
+  <section id="mechanisms" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">01</div><h2 class="title">What is a security mechanism?</h2></div>
+      <p class="lede">A rule such as "only staff may enter the server room" does not protect anything by itself. A <strong>mechanism</strong> is the actual thing that enforces the rule: a locked door, a checkpoint, a scrambled file.</p>
+
+      <table>
+        <tr><th>Security requirement</th><th>Possible mechanism</th></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Prevent unauthorized physical entry</td><td>Gate, lock, security guard</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--navy)">Prevent unauthorized network access</td><td>Firewall</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Verify identity</td><td>Authentication</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--amber)">Restrict what a user can do</td><td>Authorization</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)">Protect information in transit or at rest</td><td>Encryption</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)">Detect modification</td><td>Hashing / MAC</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--green)">Prove who created a message</td><td>Digital signature</td></tr>
+        <tr><td class="tick" style="--row-accent:var(--violet)">Hide the existence of a message</td><td>Steganography</td></tr>
+      </table>
+
+      <p>Four mechanisms make up this lecture: <strong>gates</strong> and <strong>guards</strong> control people and traffic at a boundary; <strong>cryptography</strong> and <strong>steganography</strong> control the information itself. The first two are not purely physical; each one has both a physical and a logical (digital) form.</p>
+    </div>
+  </section>
+
+  <!-- ===== 2 DEPTH ===== -->
+  <section id="depth" class="sec" data-accent="navy">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">02</div><h2 class="title">Defense in depth</h2></div>
+      <p class="lede">Never rely on a single control for a critical asset. Stack several. If one fails, another may still protect it.</p>
+
+      <div class="diagram">
+        <div class="dlabel">A weak design</div>
+        <div class="dstack">
+          <div class="dbox">Building</div>
+          <div class="darrow">↓</div>
+          <div class="dbox red">Server (anyone inside can reach it)</div>
+        </div>
+      </div>
+
+      <div class="console">
+        <div class="console-label">interactive · click a layer to knock it out</div>
+        <div class="stack-layers">
+          <button class="layerbtn" data-layer="1"><div class="layerbox">1. Building entrance</div></button>
+          <div class="layer-arrow">↓</div>
+          <button class="layerbtn" data-layer="2"><div class="layerbox">2. Security guard</div></button>
+          <div class="layer-arrow">↓</div>
+          <button class="layerbtn" data-layer="3"><div class="layerbox">3. Access card door</div></button>
+          <div class="layer-arrow">↓</div>
+          <button class="layerbtn" data-layer="4"><div class="layerbox">4. Fingerprint check</div></button>
+          <div class="layer-arrow">↓</div>
+          <button class="layerbtn" data-layer="5"><div class="layerbox">5. Server</div></button>
+          <div class="layer-arrow">↓</div>
+          <button class="layerbtn" data-layer="6"><div class="layerbox">6. Encrypted data</div></button>
+        </div>
+        <div class="stackresult" id="stackResult">All 6 layers standing, data is safe.</div>
+        <button class="resetbtn" id="stackReset">reset layers</button>
+      </div>
+
+      <div class="callout"><strong>Rule to remember:</strong> never let one single control be the only thing standing between an attacker and something important.</div>
+    </div>
+  </section>
+
+  <!-- ===== 3 GATES ===== -->
+  <section id="gates" class="sec" data-accent="navy">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">03</div><h2 class="title">Gates</h2></div>
+      <p class="lede">A <strong>gate</strong> is a barrier that decides whether someone, or some data, can pass from a less-trusted area into a more-trusted one.</p>
+
+      <div class="diagram">
+        <div class="dstack">
+          <div class="dbox">Public / untrusted area</div>
+          <div class="darrow">↓</div>
+          <div class="dbox amber">GATE</div>
+          <div class="darrow">↓</div>
+          <div class="dbox">Protected / trusted area</div>
+        </div>
+      </div>
+
+      <p><strong>A gate is not only physical.</strong> Any boundary that people or traffic must pass through counts, including a firewall.</p>
+
+      <div class="pair">
+        <div class="pcard">
+          <h4>Physical gate</h4>
+          <ul>
+            <li>Turnstiles, barrier arms, security fences</li>
+            <li>Locked doors, data-centre access doors</li>
+            <li>A <strong>mantrap</strong>: two doors, only one opens at a time, so nobody sneaks in behind you</li>
+          </ul>
+        </div>
+        <div class="pcard logical">
+          <h4>Logical gate</h4>
+          <ul>
+            <li><strong>Firewall</strong>: examines every packet</li>
+            <li><strong>Authentication gateway</strong>: valid credential in, invalid denied</li>
+            <li><strong>API gateway</strong>: checks every request before it reaches a service</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="dlabel">How a firewall (a logical gate) decides</div>
+        <div class="dstack">
+          <div class="dbox">Internet traffic</div>
+          <div class="darrow">↓</div>
+          <div class="dbox amber">Firewall</div>
+          <div class="darrow">↓</div>
+          <div class="dbranch">
+            <div class="dbox green">Allow</div>
+            <div class="dbox red">Deny</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">What makes a gate effective</h3>
+      <div class="cards3">
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Identification</h5><p>Who is it? ID card, username, IP address.</p></div>
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Authentication</h5><p>Can the claim be proved? Password, fingerprint, certificate.</p></div>
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Authorization</h5><p>Are they actually allowed? A visitor is not an employee.</p></div>
+      </div>
+
+      <div class="callout"><strong>Physical security comes first:</strong> if someone can physically walk out with a server, no amount of network encryption saves you.</div>
+
+      <h3 class="sub">Demonstration</h3>
+      <p>The same logic (check, then block or pass) applies whether the "gate" is a real turnstile or a firewall.</p>
+      <div class="console">
+        <div class="console-label">interactive · turnstile</div>
+        <div class="demo-grid">
+          <svg viewBox="0 0 220 150" aria-hidden="true">
+            <rect x="10" y="120" width="200" height="8" fill="#8B909A"/>
+            <rect x="20" y="30" width="8" height="98" fill="#8B909A"/>
+            <rect x="192" y="30" width="8" height="98" fill="#8B909A"/>
+            <g id="gateArm">
+              <rect x="26" y="98" width="164" height="7" fill="#9C2B24"/>
+              <rect x="22" y="96" width="10" height="10" fill="#14171B"/>
+            </g>
+          </svg>
+          <div>
+            <button class="action" id="gateBtn">Present credential</button>
+            <div id="gateStatus" class="mono">Gate closed. Nothing presented yet.</div>
+            <div class="status-line"><div class="light" id="gateLightDot"></div><span id="gateLightText">CLOSED</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4 GUARDS ===== -->
+  <section id="guards" class="sec" data-accent="amber">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">04</div><h2 class="title">Guards</h2></div>
+      <p class="lede">A <strong>guard</strong> watches, thinks, and decides. Unlike a gate, it can use judgement, noticing something feels wrong even when no rule says so.</p>
+
+      <div class="pair">
+        <div class="pcard">
+          <h4>Physical guard</h4>
+          <ul>
+            <li>A real person: checks IDs, watches CCTV</li>
+            <li>Uses common sense on unusual situations</li>
+          </ul>
+        </div>
+        <div class="pcard logical">
+          <h4>Logical guard</h4>
+          <ul>
+            <li><strong>IDS / IPS</strong>: watches network traffic</li>
+            <li><strong>SIEM</strong>: collects alerts across systems</li>
+            <li><strong>SOC analyst</strong>: a person watching the software</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="dlabel">The guard model</div>
+        <div class="dhoriz">
+          <div class="dbox">1. Observe</div>
+          <div class="darrow">→</div>
+          <div class="dbox">2. Analyze</div>
+          <div class="darrow">→</div>
+          <div class="dbox">3. Decide</div>
+          <div class="darrow">→</div>
+          <div class="dbox">4. Respond</div>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="dlabel">Example: an IDS acting as a logical guard</div>
+        <div class="dstack">
+          <div class="dbox">Network traffic</div>
+          <div class="darrow">↓</div>
+          <div class="dbox amber">IDS (the guard)</div>
+          <div class="darrow">↓</div>
+          <div class="dbranch">
+            <div class="dbox green">Normal → Allow</div>
+            <div class="dbox red">Suspicious → Alert</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">Gate vs. guard</h3>
+      <table style="--accent-line:var(--amber)">
+        <tr><th>Gate</th><th>Guard</th></tr>
+        <tr><td>Creates a boundary</td><td>Monitors the boundary</td></tr>
+        <tr><td>Controls entry and exit</td><td>Evaluates activity</td></tr>
+        <tr><td>Usually follows fixed rules</td><td>Can make contextual decisions</td></tr>
+        <tr><td>Example: door, firewall</td><td>Example: security officer, IDS / SOC analyst</td></tr>
+      </table>
+
+      <h3 class="sub">Demonstration</h3>
+      <p>Press the button and watch the guard scan, then decide. It's the same logic an IDS runs on network traffic.</p>
+      <div class="console">
+        <div class="console-label">interactive · badge scanner</div>
+        <div class="demo-grid">
+          <svg viewBox="0 0 120 140" aria-hidden="true">
+            <rect x="10" y="20" width="100" height="108" fill="none" stroke="#8B909A" stroke-width="2.5"/>
+            <rect x="42" y="38" width="36" height="36" fill="none" stroke="#4B5058" stroke-width="2.5"/>
+            <path d="M35 104 L60 78 L85 104 Z" fill="none" stroke="#4B5058" stroke-width="2.5"/>
+            <rect x="46" y="8" width="28" height="18" fill="#256B41" id="badgeIcon"/>
+          </svg>
+          <div>
+            <button class="action" id="scanBtn">Present badge</button>
+            <div id="guardStatus" class="mono">Waiting...</div>
+            <div class="status-line"><div class="light" id="guardLight"></div><span id="guardLightText">STANDBY</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5 CONTROLS ===== -->
+  <section id="controls" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">05</div><h2 class="title">Preventive, detective &amp; corrective controls</h2></div>
+      <p class="lede">Every security control is generally trying to do one of three things, and together they form a cycle that never really stops.</p>
+
+      <div class="cards3">
+        <div class="mini" style="--accent-line:var(--navy)"><h5>Preventive</h5><p>Stops trouble before it starts. Firewall, password, locked door, encryption.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>Detective</h5><p>Notices trouble as it happens. IDS, CCTV, audit logs.</p></div>
+        <div class="mini" style="--accent-line:var(--green)"><h5>Corrective</h5><p>Fixes things afterward. Restoring a backup, resetting a password.</p></div>
+      </div>
+
+      <div class="cycle-wrap">
+        <svg viewBox="0 0 300 300" role="img" aria-label="Cycle diagram: prevent, detect, respond, recover">
+          <defs>
+            <marker id="cyc-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#8B909A"/>
+            </marker>
+          </defs>
+          <path d="M172,52 A110,110 0 0,1 248,158" fill="none" stroke="#8B909A" stroke-width="2" marker-end="url(#cyc-arrow)"/>
+          <path d="M248,182 A110,110 0 0,1 172,252" fill="none" stroke="#8B909A" stroke-width="2" marker-end="url(#cyc-arrow)"/>
+          <path d="M128,252 A110,110 0 0,1 52,182" fill="none" stroke="#8B909A" stroke-width="2" marker-end="url(#cyc-arrow)"/>
+          <path d="M52,158 A110,110 0 0,1 128,52" fill="none" stroke="#8B909A" stroke-width="2" marker-end="url(#cyc-arrow)"/>
+          <circle cx="150" cy="40" r="36" fill="var(--navy-fill)" stroke="var(--navy)" stroke-width="2.5"/>
+          <text x="150" y="45" text-anchor="middle" class="cycle-label">Prevent</text>
+          <circle cx="260" cy="150" r="36" fill="var(--amber-fill)" stroke="var(--amber)" stroke-width="2.5"/>
+          <text x="260" y="155" text-anchor="middle" class="cycle-label">Detect</text>
+          <circle cx="150" cy="260" r="36" fill="var(--green-fill)" stroke="var(--green)" stroke-width="2.5"/>
+          <text x="150" y="265" text-anchor="middle" class="cycle-label">Respond</text>
+          <circle cx="40" cy="150" r="36" fill="var(--violet-fill)" stroke="var(--violet)" stroke-width="2.5"/>
+          <text x="40" y="155" text-anchor="middle" class="cycle-label">Recover</text>
+          <text x="150" y="146" text-anchor="middle" class="cycle-center">ongoing</text>
+          <text x="150" y="162" text-anchor="middle" class="cycle-center">cycle</text>
+        </svg>
+      </div>
+      <p>A mature setup uses all three together. One type alone is never enough.</p>
+    </div>
+  </section>
+
+  <!-- ===== 6 CRYPTOGRAPHY ===== -->
+  <section id="crypto" class="sec" data-accent="green">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">06</div><h2 class="title">Cryptography</h2></div>
+      <p class="lede"><strong>Cryptography</strong> turns a readable message (plaintext) into scrambled nonsense (ciphertext) using a key, so only someone with the matching key can turn it back.</p>
+
+      <div class="diagram">
+        <div class="dhoriz">
+          <div class="dbox">Plaintext<br><span class="mono" style="font-weight:400; font-size:13px;">MEET AT 10</span></div>
+          <div class="darrow">→</div>
+          <div class="dbox amber">Encrypt (key K)</div>
+          <div class="darrow">→</div>
+          <div class="dbox dark">Ciphertext<br><span class="mono" style="font-weight:400; font-size:13px;">X7$K9@P2</span></div>
+          <div class="darrow">→</div>
+          <div class="dbox amber">Decrypt (key K)</div>
+          <div class="darrow">→</div>
+          <div class="dbox">Plaintext</div>
+        </div>
+      </div>
+
+      <div class="formula" style="--accent-line:var(--green)">C = E(K, P): encrypt plaintext with key K to get ciphertext<br>P = D(K, C): decrypt back with the same or matching key</div>
+
+      <p>The method can be public; only the <strong>key</strong> needs to stay secret. This is <strong>Kerckhoffs's principle</strong>: a system should stay secure even if everyone knows exactly how it works, as long as they don't have the key.</p>
+
+      <h3 class="sub">Symmetric vs. asymmetric</h3>
+      <div class="pair">
+        <div class="pcard" style="border-color:var(--green)">
+          <h4 style="color:var(--green)">Symmetric: one shared key</h4>
+          <ul>
+            <li>Same key locks and unlocks</li>
+            <li>Fast, good for large files</li>
+            <li>Hard part: sharing the same secret key safely</li>
+            <li>Examples: AES, ChaCha20</li>
+          </ul>
+        </div>
+        <div class="pcard logical">
+          <h4>Asymmetric: two different keys</h4>
+          <ul>
+            <li>Public key locks, private key unlocks</li>
+            <li>Slower, but the public key can be shared freely</li>
+            <li>Also used for digital signatures</li>
+            <li>Examples: RSA, ECC</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="dlabel">Hybrid cryptography: how HTTPS actually works</div>
+        <div class="dstack">
+          <div class="dbox amber">Public-key handshake, sets up a shared secret</div>
+          <div class="darrow">↓</div>
+          <div class="dbox green">Fast symmetric encryption, for all the real data</div>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="dlabel">Digital signature: proving who sent it</div>
+        <div class="dhoriz">
+          <div class="dbox">Message</div><div class="darrow">→</div>
+          <div class="dbox">Hash</div><div class="darrow">→</div>
+          <div class="dbox amber">Sign with private key</div><div class="darrow">→</div>
+          <div class="dbox green">Signature, verified with public key</div>
+        </div>
+      </div>
+
+      <h3 class="sub">Hashing is not encryption</h3>
+      <table style="--accent-line:var(--green)">
+        <tr><th>Encryption</th><th>Hashing</th></tr>
+        <tr><td>Reversible with the right key</td><td>Designed to be one-way</td></tr>
+        <tr><td>Protects confidentiality</td><td>Checks integrity, verifies passwords</td></tr>
+        <tr><td>Example: AES</td><td>Example: SHA-256</td></tr>
+      </table>
+      <p style="font-size:14.5px;"><strong>Careful with wording:</strong> passwords are stored as password <em>hashes</em>, not "encrypted."</p>
+
+      <h3 class="sub">Demonstration: a simple code</h3>
+      <p>Every letter shifts forward by a fixed number (the key). Ancient and easy to crack, but the same basic idea as modern encryption.</p>
+      <div class="console">
+        <div class="console-label">interactive · Caesar cipher</div>
+        <div class="cipher">
+          <label for="cipherInput" class="mono" style="font-size:12px; text-transform:uppercase; font-weight:700; color:var(--green); display:block; margin-bottom:6px;">Your message</label>
+          <input type="text" id="cipherInput" class="mono" value="MEET AT THE GATE AT NOON" maxlength="60">
+          <div class="slide-row">
+            <label for="shiftSlider" class="mono" style="margin:0; white-space:nowrap; font-weight:700; color:var(--ink);">Key</label>
+            <input type="range" id="shiftSlider" min="0" max="25" value="3">
+            <span class="shift mono" id="shiftVal">3</span>
+          </div>
+          <label class="mono" style="font-size:12px; text-transform:uppercase; font-weight:700; color:var(--green); display:block; margin-bottom:6px;">Scrambled message</label>
+          <div class="cipher-out" id="cipherOutput">...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7 STEGANOGRAPHY ===== -->
+  <section id="stego" class="sec" data-accent="violet">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">07</div><h2 class="title">Steganography</h2></div>
+      <p class="lede">Hides a message so well that nobody knows it exists. Cryptography hides <em>meaning</em>. Steganography hides <em>existence</em>.</p>
+
+      <div class="diagram">
+        <div class="dhoriz">
+          <div class="dbox">Secret message + cover image</div>
+          <div class="darrow">→</div>
+          <div class="dbox violet">Steganography algorithm</div>
+          <div class="darrow">→</div>
+          <div class="dbox green">Stego object, looks ordinary</div>
+        </div>
+      </div>
+
+      <div class="formula" style="--accent-line:var(--violet)">Pixel value: 1011011<u>0</u>, last bit changed to 1011011<u>1</u><br>The shift is too small to see, but it can carry hidden data across thousands of pixels.</div>
+
+      <div class="diagram">
+        <div class="dlabel">Combining the two: encrypt, then hide</div>
+        <div class="dstack">
+          <div class="dbox">Secret message</div>
+          <div class="darrow">↓</div>
+          <div class="dbox amber">Encrypt → ciphertext</div>
+          <div class="darrow">↓</div>
+          <div class="dbox violet">Hide the ciphertext inside an image</div>
+          <div class="darrow">↓</div>
+          <div class="dbox green">Two layers: hidden AND unreadable</div>
+        </div>
+      </div>
+
+      <div class="callout"><strong>Best practice:</strong> if someone finds the hiding spot, they should still only get unreadable ciphertext, not the real message.</div>
+
+      <p style="font-size:14.5px;"><strong>Steganalysis</strong> is the flip side: hunting for tiny statistical patterns that reveal hidden data. A <strong>watermark</strong> is different again: it embeds ownership information meant to survive resizing, not stay secret.</p>
+
+      <h3 class="sub">Demonstration: a hidden message in "noise"</h3>
+      <p>The box below looks random. A message is hidden using tiny, invisible colour changes. Press reveal to make them visible.</p>
+      <div class="console">
+        <div class="console-label">interactive · LSB steganography</div>
+        <div class="stego">
+          <div>
+            <canvas id="stegoCanvas" width="240" height="130"></canvas>
+            <div class="cap">looks random, but it isn't</div>
+          </div>
+          <div>
+            <button class="action" id="stegoBtn">Reveal hidden message</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8 TOGETHER ===== -->
+  <section id="together" class="sec" data-accent="navy">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">08</div><h2 class="title">Putting it together: a hospital example</h2></div>
+      <p class="lede">Dr. Silva needs to open a patient record. Every mechanism from this lecture shows up in one ordinary task.</p>
+
+      <div class="timeline">
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--navy)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="1"/><circle cx="14" cy="12" r="1" fill="var(--navy)"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--navy)"><div class="tl-num">PHYSICAL GATE</div><p>Enters the hospital</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--navy)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--navy)"><div class="tl-num">PHYSICAL GUARD</div><p>Checked by security personnel</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--amber)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="9" width="18" height="4"/><rect x="3" y="15" width="18" height="4"/><line x1="8" y1="9" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="15"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--amber)"><div class="tl-num">NETWORK GATE</div><p>Passes through the hospital firewall</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--amber)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="8" cy="8" r="4"/><path d="M10.5 10.5L21 21M16 16l3-3"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--amber)"><div class="tl-num">AUTHENTICATION</div><p>Login plus a second factor</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--amber)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--amber)"><div class="tl-num">AUTHORIZATION</div><p>Checked: allowed for this record?</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--green)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--green)"><div class="tl-num">CRYPTOGRAPHY</div><p>Connection is encrypted</p></div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot" style="--step-accent:var(--ink)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="1"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+          </div>
+          <div class="tl-card" style="--step-accent:var(--ink)"><div class="tl-num">LOGGING</div><p>Access recorded and time-stamped</p></div>
+        </div>
+      </div>
+
+      <div class="callout"><strong>Zero Trust:</strong> even Dr. Silva, already inside the hospital network, is checked every time. Being "inside" no longer means automatic trust.</div>
+
+      <table>
+        <tr><th>Mechanism</th><th>Job</th><th>Physical form</th><th>Logical form</th></tr>
+        <tr><td>Gate</td><td>Enforces a boundary</td><td>Door, turnstile</td><td>Firewall, login wall</td></tr>
+        <tr><td>Guard</td><td>Watches and decides</td><td>Security officer</td><td>IDS, SOC analyst</td></tr>
+        <tr><td>Cryptography</td><td>Scrambles content</td><td>N/A</td><td>AES, RSA</td></tr>
+        <tr><td>Steganography</td><td>Hides existence</td><td>N/A</td><td>Hidden data in a file</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== 9 PRINCIPLES ===== -->
+  <section id="principles" class="sec" data-accent="amber">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">09</div><h2 class="title">Principles worth memorising</h2></div>
+
+      <div class="cards3">
+        <div class="mini" style="--accent-line:var(--amber)"><h5>1 · Defense in depth</h5><p>Stack layers so one failure isn't the whole story.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>2 · Least privilege</h5><p>Give people only what they need, nothing more.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>3 · Fail securely</h5><p>When something breaks, default to locked, not open.</p></div>
+      </div>
+      <div class="cards3">
+        <div class="mini" style="--accent-line:var(--amber)"><h5>4 · Complete mediation</h5><p>Check every request. Never assume a past approval still holds.</p></div>
+        <div class="mini" style="--accent-line:var(--amber)"><h5>5 · Separation of duties</h5><p>Split sensitive tasks between two people.</p></div>
+        <div class="mini" style="border:none; background:transparent;"></div>
+      </div>
+
+      <h3 class="sub">Common misconceptions</h3>
+      <details class="qa">
+        <summary>"Encryption makes a system completely secure."</summary>
+        <div class="a">No. It doesn't stop malware, social engineering, weak passwords, or insider threats.</div>
+      </details>
+      <details class="qa">
+        <summary>"Steganography is encryption."</summary>
+        <div class="a">No. Encryption hides meaning, steganography hides existence.</div>
+      </details>
+      <details class="qa">
+        <summary>"A firewall is enough."</summary>
+        <div class="a">No. It's one layer among many needed.</div>
+      </details>
+      <details class="qa">
+        <summary>"If a user is inside the network, they can be trusted."</summary>
+        <div class="a">Zero Trust rejects this. Being inside no longer means automatic trust.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===== 10 RECAP ===== -->
+  <section id="recap" class="sec" data-accent="ink">
+    <div class="sec-inner">
+      <div class="sec-head"><div class="sec-badge">10</div><h2 class="title">Recap</h2></div>
+      <p class="lede">Every mechanism answers the same question, for a different situation: how do we stop someone who isn't allowed in? Gates and guards do it for people and networks. Cryptography and steganography do it for information.</p>
+
+      <dl class="glossary">
+        <dt>Gate</dt><dd>A barrier, physical or logical, that only lets through what's allowed.</dd>
+        <dt>Guard</dt><dd>A person or program that observes, decides, and responds.</dd>
+        <dt>Mantrap</dt><dd>Two doors in sequence; the second won't open until the first is shut.</dd>
+        <dt>Cryptography</dt><dd>Scrambling a message with a key.</dd>
+        <dt>Steganography</dt><dd>Hiding that a message exists at all.</dd>
+        <dt>Defense in depth</dt><dd>Stacking controls so one failure doesn't expose everything.</dd>
+        <dt>Zero Trust</dt><dd>Never trust automatically, verify every time.</dd>
+      </dl>
+
+      <div class="activity">
+        <h4>Classroom activity</h4>
+        <p style="max-width:none; margin:0;"><strong>Scenario:</strong> design a security setup for a university exam database using at least 2 gates, 2 guards, 2 cryptographic mechanisms, and 1 information-hiding mechanism. Then ask: <em>if the firewall fails, what protects the database next?</em></p>
+      </div>
+
+      <h3 class="sub">Quick check</h3>
+      <details class="qa">
+        <summary>Is a firewall a gate or a guard?</summary>
+        <div class="a">Both. It decides what's allowed (guard-like) and blocks the rest (gate-like).</div>
+      </details>
+      <details class="qa">
+        <summary>Why hide a message after encrypting it, rather than just hiding it?</summary>
+        <div class="a">If the hiding spot is found, the attacker still only gets scrambled, unreadable text.</div>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<footer>DS5105 · Information Security · Security Implementation Mechanisms · For lecture use</footer>
+
+<script>
+  // Checkpoint nav active-state on scroll
+  const cps = Array.from(document.querySelectorAll('.cp'));
+  const secs = cps.map(cp => document.querySelector(cp.getAttribute('href')));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const idx = secs.indexOf(entry.target);
+      if (idx === -1) return;
+      if (entry.isIntersecting) {
+        cps.forEach(cp => cp.classList.remove('active'));
+        cps[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  secs.forEach(sec => sec && io.observe(sec));
+
+  // Defense-in-depth interactive stack
+  const layerBtns = document.querySelectorAll('.layerbtn');
+  const stackResult = document.getElementById('stackResult');
+  const stackReset = document.getElementById('stackReset');
+  function updateStack() {
+    const total = layerBtns.length;
+    const down = document.querySelectorAll('.layerbtn.down').length;
+    if (down === 0) {
+      stackResult.textContent = 'All ' + total + ' layers standing, data is safe.';
+      stackResult.classList.remove('exposed');
+    } else if (down < total) {
+      stackResult.textContent = down + ' of ' + total + ' layers down, data is still safe, the rest are holding.';
+      stackResult.classList.remove('exposed');
+    } else {
+      stackResult.textContent = 'All layers down, data is exposed. This is why one layer is never enough.';
+      stackResult.classList.add('exposed');
+    }
+  }
+  layerBtns.forEach(btn => {
+    btn.addEventListener('click', () => { btn.classList.toggle('down'); updateStack(); });
+  });
+  stackReset.addEventListener('click', () => {
+    layerBtns.forEach(b => b.classList.remove('down'));
+    updateStack();
+  });
+
+  // Guard demo
+  const scanBtn = document.getElementById('scanBtn');
+  const badge = document.getElementById('badgeIcon');
+  const guardLight = document.getElementById('guardLight');
+  const guardLightText = document.getElementById('guardLightText');
+  const guardStatus = document.getElementById('guardStatus');
+  scanBtn.addEventListener('click', () => {
+    badge.classList.remove('scan-anim');
+    void badge.offsetWidth;
+    badge.classList.add('scan-anim');
+    guardStatus.textContent = 'Checking...';
+    guardLight.className = 'light';
+    guardLightText.textContent = 'CHECKING';
+    setTimeout(() => {
+      const ok = Math.random() > 0.3;
+      guardLight.className = 'light ' + (ok ? 'go' : 'stop');
+      guardLightText.textContent = ok ? 'GRANTED' : 'DENIED';
+      guardStatus.textContent = ok ? 'Allowed, badge checks out.' : 'Denied, badge not recognised.';
+    }, 850);
+  });
+
+  // Gate demo
+  const gateArm = document.getElementById('gateArm');
+  const gateBtn = document.getElementById('gateBtn');
+  const gateLightDot = document.getElementById('gateLightDot');
+  const gateLightText = document.getElementById('gateLightText');
+  const gateStatus = document.getElementById('gateStatus');
+  let gateOpen = false;
+  gateBtn.addEventListener('click', () => {
+    gateOpen = !gateOpen;
+    gateArm.style.transform = gateOpen ? 'rotate(-78deg)' : 'rotate(0deg)';
+    gateLightDot.className = 'light ' + (gateOpen ? 'go' : 'stop');
+    gateLightText.textContent = gateOpen ? 'OPEN' : 'CLOSED';
+    gateStatus.textContent = gateOpen ? 'Open, passing through.' : 'Closed. Nothing presented.';
+    gateBtn.textContent = gateOpen ? 'Close gate' : 'Present credential';
+  });
+
+  // Caesar cipher demo
+  const cipherInput = document.getElementById('cipherInput');
+  const shiftSlider = document.getElementById('shiftSlider');
+  const shiftVal = document.getElementById('shiftVal');
+  const cipherOutput = document.getElementById('cipherOutput');
+  function caesar(str, shift) {
+    return str.split('').map(ch => {
+      const c = ch.charCodeAt(0);
+      if (c >= 65 && c <= 90) return String.fromCharCode((c - 65 + shift + 26) % 26 + 65);
+      if (c >= 97 && c <= 122) return String.fromCharCode((c - 97 + shift + 26) % 26 + 97);
+      return ch;
+    }).join('');
+  }
+  function updateCipher() {
+    const s = parseInt(shiftSlider.value, 10);
+    shiftVal.textContent = s;
+    cipherOutput.textContent = caesar(cipherInput.value, s) || '...';
+  }
+  cipherInput.addEventListener('input', updateCipher);
+  shiftSlider.addEventListener('input', updateCipher);
+  updateCipher();
+
+  // Steganography LSB demo
+  (function () {
+    const cw = 240, ch = 130;
+    const canvas = document.getElementById('stegoCanvas');
+    const ctx = canvas.getContext('2d');
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = cw; maskCanvas.height = ch;
+    const mctx = maskCanvas.getContext('2d');
+    mctx.fillStyle = '#000'; mctx.fillRect(0, 0, cw, ch);
+    mctx.fillStyle = '#fff';
+    mctx.font = 'bold 42px "IBM Plex Mono", monospace';
+    mctx.textBaseline = 'middle';
+    mctx.fillText('HI', 64, ch / 2 + 2);
+    const maskData = mctx.getImageData(0, 0, cw, ch).data;
+
+    const coverData = new Uint8ClampedArray(cw * ch * 4);
+    for (let i = 0; i < cw * ch; i++) {
+      const p = i * 4;
+      const base = 195 + Math.floor(Math.random() * 35);
+      let r = base - 8, g = base, b = base - 16;
+      const on = maskData[p] > 128;
+      b = on ? (b | 1) : (b & ~1);
+      coverData[p] = r; coverData[p+1] = g; coverData[p+2] = b; coverData[p+3] = 255;
+    }
+    function paint(revealed) {
+      const out = ctx.createImageData(cw, ch);
+      for (let i = 0; i < cw * ch; i++) {
+        const p = i * 4;
+        if (!revealed) {
+          out.data[p]=coverData[p]; out.data[p+1]=coverData[p+1]; out.data[p+2]=coverData[p+2]; out.data[p+3]=255;
+        } else {
+          const bit = coverData[p+2] & 1;
+          const v = bit ? 37 : 235;
+          out.data[p]=v; out.data[p+1]= bit ? 107 : 235; out.data[p+2]= bit ? 65 : 232; out.data[p+3]=255;
+        }
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+    paint(false);
+    let revealed = false;
+    document.getElementById('stegoBtn').addEventListener('click', () => {
+      revealed = !revealed;
+      paint(revealed);
+      document.getElementById('stegoBtn').textContent = revealed ? 'Hide again' : 'Reveal hidden message';
+    });
+  })();
+</script>
+</body>
+</html>
