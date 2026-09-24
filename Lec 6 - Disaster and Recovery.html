@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disaster and Recovery - DS5105</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F3;
+    --panel:#FFFFFF;
+    --surface:#FFFFFF;
+    --ink:#14181F;
+    --ink-soft:#333D48;
+    --line:#C7D0D6;
+    --on-accent:#FFFFFF;
+    --accent:#C1461B;  --accent-fill:#FBE7DC;
+    --safe:#0E7C6B;    --safe-fill:#DFF1EC;
+    --info:#1E5AA8;    --info-fill:#E1EAF6;
+    --warn:#966216;    --warn-fill:#F7ECD6;
+    --crit:#A32A2A;    --crit-fill:#F7E1E1;
+    --display:"Fraunces", Georgia, serif;
+    --sans:"Work Sans", sans-serif;
+    --mono:"JetBrains Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#10151B;
+      --panel:#171E26;
+      --surface:#1D262F;
+      --ink:#F3F6F8;
+      --ink-soft:#C7D2DA;
+      --line:#37424D;
+      --on-accent:#10151B;
+      --accent:#E2822E;  --accent-fill:#33240F;
+      --safe:#57C4AA;    --safe-fill:#0F2B24;
+      --info:#78A9E3;    --info-fill:#172A40;
+      --warn:#E2BB55;    --warn-fill:#312812;
+      --crit:#E08A8A;    --crit-fill:#391D1D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#10151B;
+    --panel:#171E26;
+    --surface:#1D262F;
+    --ink:#F3F6F8;
+    --ink-soft:#C7D2DA;
+    --line:#37424D;
+    --on-accent:#10151B;
+    --accent:#E2822E;  --accent-fill:#33240F;
+    --safe:#57C4AA;    --safe-fill:#0F2B24;
+    --info:#78A9E3;    --info-fill:#172A40;
+    --warn:#E2BB55;    --warn-fill:#312812;
+    --crit:#E08A8A;    --crit-fill:#391D1D;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:19px; line-height:1.7; transition:background .25s ease, color .25s ease;}
+  ::selection{background:var(--accent); color:var(--on-accent);}
+  h1{font-family:var(--display); font-weight:700; margin:0; color:var(--ink); text-wrap:balance;}
+  h2,h3{font-family:var(--sans); font-weight:700; margin:0; color:var(--ink); text-wrap:balance;}
+  p{margin:0 0 14px; max-width:70ch;}
+  a{color:var(--info);}
+  strong{color:var(--ink); font-weight:700;}
+  .mono{font-family:var(--mono);}
+
+  .stripe{ height:8px; background:repeating-linear-gradient(135deg, var(--accent) 0 12px, transparent 12px 24px); opacity:.85;}
+
+  /* ================= TOP BAR ================= */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 5vw; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .brand{ display:flex; align-items:center; gap:10px;}
+  .brand .code{ font-family:var(--mono); font-size:12.5px; font-weight:700; border:1.5px solid var(--accent); color:var(--accent); padding:3px 8px; border-radius:3px;}
+  .brand .name{ font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); letter-spacing:.03em;}
+  .theme-toggle{ display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; font-weight:600;
+    background:var(--paper); border:1.5px solid var(--line); color:var(--ink); padding:7px 12px; border-radius:20px; cursor:pointer; transition:border-color .2s ease;}
+  .theme-toggle:hover{ border-color:var(--accent);}
+  .theme-toggle .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;}
+
+  /* ================= HERO ================= */
+  .hero{ padding:52px 5vw 40px; max-width:1200px; margin:0 auto;}
+  .hero .kicker{ font-family:var(--mono); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:10px;}
+  .hero .kicker::before{ content:""; width:26px; height:2px; background:var(--accent);}
+  .hero h1{ font-size:clamp(32px,5.2vw,54px); line-height:1.05; max-width:16ch;}
+  .hero .sub{ color:var(--ink-soft); font-size:19.5px; margin-top:18px; max-width:60ch;}
+
+  .gaugebar-hero{ display:flex; gap:3px; margin-top:28px; max-width:420px;}
+  .gaugebar-hero span{ flex:1; height:6px; background:var(--line); border-radius:2px; overflow:hidden; position:relative;}
+  .gaugebar-hero span::after{ content:""; position:absolute; inset:0; background:var(--accent); transform:scaleX(0); transform-origin:left; animation:fillseg 2.4s ease-out forwards;}
+  .gaugebar-hero span:nth-child(1)::after{ animation-delay:.1s;}
+  .gaugebar-hero span:nth-child(2)::after{ animation-delay:.3s;}
+  .gaugebar-hero span:nth-child(3)::after{ animation-delay:.5s;}
+  .gaugebar-hero span:nth-child(4)::after{ animation-delay:.7s;}
+  .gaugebar-hero span:nth-child(5)::after{ animation-delay:.9s;}
+  @keyframes fillseg{ to{ transform:scaleX(1);} }
+
+  /* ================= LAYOUT ================= */
+  .layout{ max-width:1200px; margin:0 auto; padding:0 5vw 60px;}
+  nav.toc{ position:sticky; top:0; z-index:20; display:flex; flex-direction:row; align-items:center; gap:4px; overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--paper); border-bottom:1px solid var(--line); padding:12px 0 12px; margin-bottom:8px; scrollbar-width:thin;}
+  nav.toc a{ text-decoration:none; color:var(--ink-soft); font-family:var(--mono); font-size:12.5px; padding:8px 14px; border-radius:20px; border:1.5px solid transparent; transition:all .15s ease; display:flex; gap:8px; white-space:nowrap; flex-shrink:0;}
+  nav.toc a .n{ color:var(--ink-soft); flex-shrink:0;}
+  nav.toc a:hover{ background:var(--panel); color:var(--ink); border-color:var(--line);}
+  nav.toc a.active{ border-color:var(--accent); background:var(--accent-fill); color:var(--accent); font-weight:600;}
+  nav.toc a.active .n{ color:var(--accent);}
+
+  main{ min-width:0;}
+  .sec{ padding:38px 0 42px; border-bottom:1px solid var(--line);}
+  .sec-head{ display:flex; align-items:baseline; gap:16px; margin-bottom:16px;}
+  .sec-num{ font-family:var(--sans); font-weight:900; font-size:44px; color:#10151B; -webkit-text-stroke:1.5px var(--line); line-height:1; flex-shrink:0;}
+  h2.title{ font-size:clamp(21px,2.3vw,28px); line-height:1.2;}
+  .lede{ font-size:19px; color:var(--ink-soft); max-width:66ch;}
+  h3.sub{ font-family:var(--sans); font-weight:700; font-size:20.5px; margin:26px 0 10px;}
+
+  .callout{ border-radius:8px; border:1.5px solid var(--line); background:var(--panel); padding:16px 20px; margin:18px 0; font-size:16.5px; max-width:none; position:relative; padding-left:22px;}
+  .callout::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; border-radius:8px 0 0 8px; background:var(--ink);}
+  .callout.accent::before{ background:var(--accent);}
+  .callout.safe::before{ background:var(--safe);}
+  .callout.info::before{ background:var(--info);}
+  .callout.warn::before{ background:var(--warn);}
+  .callout.crit::before{ background:var(--crit);}
+
+  .cards3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0;}
+  .cards2{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:18px 0;}
+  .mini{ border-radius:8px; border:1.5px solid var(--line); padding:16px 18px; background:var(--panel);}
+  .mini .tag{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-block; margin-bottom:9px;}
+  .mini .tag.accent{ color:var(--accent); background:var(--accent-fill);}
+  .mini .tag.safe{ color:var(--safe); background:var(--safe-fill);}
+  .mini .tag.info{ color:var(--info); background:var(--info-fill);}
+  .mini .tag.warn{ color:var(--warn); background:var(--warn-fill);}
+  .mini .tag.crit{ color:var(--crit); background:var(--crit-fill);}
+  .mini h5{ font-family:var(--sans); font-weight:700; font-size:18px; margin:0 0 6px;}
+  .mini p{ font-size:16px; margin:0; max-width:none; color:var(--ink-soft);}
+
+  .tblwrap{ overflow-x:auto; border-radius:8px; border:1.5px solid var(--line);}
+  table{ width:100%; border-collapse:collapse; font-size:15.5px;}
+  th{ background:var(--panel); color:var(--ink-soft); text-align:left; padding:11px 14px; font-family:var(--mono); font-size:11px; text-transform:uppercase; font-weight:600; border-bottom:1.5px solid var(--line); letter-spacing:.03em;}
+  td{ padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; background:var(--surface);}
+  tr:last-child td{ border-bottom:none;}
+
+  .formula{ font-family:var(--mono); font-size:14px; background:var(--ink); color:var(--paper); border-radius:8px; padding:16px 20px; margin:18px 0; line-height:1.8; max-width:none;}
+
+  dl.glossary dt{ font-family:var(--mono); font-weight:700; margin-top:14px; color:var(--accent); font-size:14px;}
+  dl.glossary dd{ margin:3px 0 0; color:var(--ink-soft);}
+
+  .activity{ border-radius:8px; border:1.5px dashed var(--accent); background:var(--accent-fill); padding:20px 22px; margin-top:20px;}
+  .activity h4{ font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); margin:0 0 10px; font-weight:700;}
+
+  details.qa{ border-radius:8px; border:1.5px solid var(--line); background:var(--panel); padding:14px 18px; margin-bottom:8px;}
+  details.qa summary{ cursor:pointer; font-family:var(--mono); font-size:13px; font-weight:600; color:var(--ink);}
+  details.qa .a{ margin-top:9px; font-size:16px; max-width:none; color:var(--ink-soft);}
+
+  footer{ background:var(--panel); color:var(--ink-soft); padding:24px 5vw; font-family:var(--mono); font-size:11px; text-align:center; border-top:1px solid var(--line);}
+
+  .console{ border-radius:10px; background:var(--panel); color:var(--ink); border:1.5px solid var(--line); padding:22px 24px; margin:20px 0;}
+  .console-label{ font-family:var(--mono); font-size:11px; color:var(--ink-soft); margin-bottom:16px; display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:.05em;}
+  .console-label::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--safe); flex-shrink:0;}
+
+  /* ---------- umbrella family diagram ---------- */
+  .umbrella{ position:relative; margin:22px 0; padding:26px 20px 20px; border-radius:10px; background:var(--panel); border:1.5px solid var(--line);}
+  .umbrella-top{ text-align:center; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:16px;}
+  .umbrella-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .uplan{ border-radius:8px; padding:12px 14px; text-align:center; font-size:13px; font-weight:600; cursor:default; transition:transform .15s ease;}
+  .uplan:hover{ transform:translateY(-3px);}
+  .uplan.bcp{ background:var(--info-fill); color:var(--info); border:1.5px solid var(--info);}
+  .uplan.drp{ background:var(--safe-fill); color:var(--safe); border:1.5px solid var(--safe);}
+  .uplan.coop{ background:var(--accent-fill); color:var(--accent); border:1.5px solid var(--accent);}
+  .uplan.ccp{ background:var(--warn-fill); color:var(--warn); border:1.5px solid var(--warn);}
+  .uplan.cirp{ background:var(--crit-fill); color:var(--crit); border:1.5px solid var(--crit);}
+  .uplan.oep{ background:var(--line); color:var(--ink-soft); border:1.5px solid var(--line);}
+  .uplan small{ display:block; font-family:var(--mono); font-size:10px; font-weight:400; margin-top:4px; opacity:.8;}
+
+  /* ---------- server room hotspot diagram ---------- */
+  .house-wrap{ display:grid; grid-template-columns:1.1fr 1fr; gap:26px; align-items:center;}
+  .house-wrap svg{ width:100%; height:auto;}
+  .hotspot{ cursor:pointer; }
+  .hotspot circle.ring{ fill:none; stroke-width:2.5; transition:r .15s ease, stroke-width .15s ease;}
+  .hotspot:hover circle.ring, .hotspot.active circle.ring{ stroke-width:4;}
+  .house-info{ min-height:170px;}
+  .house-tag{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:9px;}
+  .house-tag.spof{ color:var(--warn); background:var(--warn-fill);}
+  .house-tag.trigger{ color:var(--info); background:var(--info-fill);}
+  .house-tag.outage{ color:var(--crit); background:var(--crit-fill);}
+  .house-tag.control{ color:var(--safe); background:var(--safe-fill);}
+  .house-info p{ font-size:16px; max-width:none; color:var(--ink-soft);}
+  .house-hint{ font-family:var(--mono); font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+
+  /* ---------- matcher ---------- */
+  .matcher{ display:flex; flex-direction:column; gap:8px; margin:18px 0;}
+  .mrow{ display:flex; align-items:center; justify-content:space-between; gap:14px; border-radius:8px; border:1.5px solid var(--line); background:var(--panel); padding:13px 16px; cursor:pointer; transition:background .15s ease;}
+  .mrow:hover{ background:var(--surface); border-color:var(--accent);}
+  .mrow .mtext{ font-size:15.5px; flex:1;}
+  .mrow .mtag{ font-family:var(--mono); font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px; border:1.5px solid var(--line); color:var(--ink-soft); white-space:nowrap; transition:all .15s ease;}
+  .mrow.revealed .mtag{ color:var(--on-accent);}
+  .mrow.revealed[data-cat="full"] .mtag{ background:var(--info); border-color:var(--info);}
+  .mrow.revealed[data-cat="incremental"] .mtag{ background:var(--crit); border-color:var(--crit);}
+  .mrow.revealed[data-cat="differential"] .mtag{ background:var(--warn); border-color:var(--warn);}
+  .mrow.revealed[data-cat="mirroring"] .mtag{ background:var(--accent); border-color:var(--accent);}
+
+  /* ---------- site tier gauges ---------- */
+  .gauges{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:20px 0;}
+  .gauge{ border-radius:10px; border:1.5px solid var(--line); background:var(--panel); padding:18px; text-align:center;}
+  .gauge h5{ font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin:0 0 12px; color:var(--ink-soft);}
+  .gauge-ring{ position:relative; width:96px; height:96px; margin:0 auto 12px;}
+  .gauge-ring svg{ width:100%; height:100%; transform:rotate(-90deg);}
+  .gauge-ring circle.track{ fill:none; stroke:var(--line); stroke-width:8;}
+  .gauge-ring circle.fill{ fill:none; stroke-width:8; stroke-linecap:round; stroke-dasharray:251; stroke-dashoffset:251; transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1);}
+  .gauge-ring .gval{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px; transform:none;}
+  .gauge p{ font-size:14.5px; color:var(--ink-soft); margin:0;}
+
+  /* ---------- chain breaker ---------- */
+  .chainflow{ display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap; margin:20px 0;}
+  .cnode{ font-family:var(--mono); font-weight:700; font-size:12px; text-align:center; padding:12px 14px; border-radius:8px; border:2px solid var(--line); background:var(--surface); color:var(--ink); min-width:104px;}
+  .cnode.threat{ border-color:var(--info); background:var(--info-fill); color:var(--info);}
+  .cnode.vuln{ border-color:var(--warn); background:var(--warn-fill); color:var(--warn);}
+  .cnode.attack{ border-color:var(--crit); background:var(--crit-fill); color:var(--crit);}
+  .cnode.impact{ border-color:var(--ink); background:var(--ink); color:var(--paper);}
+  .clink{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 10px;}
+  .clink .arrow{ font-size:20px; color:var(--ink-soft);}
+  .shieldbtn{ all:unset; cursor:pointer; font-family:var(--mono); font-size:10.5px; border:1.5px solid var(--line); border-radius:20px; background:var(--panel); color:var(--ink); padding:5px 10px; text-align:center; transition:all .15s ease;}
+  .shieldbtn.on{ background:var(--safe); border-color:var(--safe); color:var(--on-accent);}
+  .chain-result{ margin-top:10px; padding:14px 18px; border-radius:8px; font-family:var(--mono); font-size:13px; font-weight:600; border:1.5px solid var(--crit); background:var(--crit-fill); color:var(--crit); text-align:center;}
+  .chain-result.safe{ border-color:var(--safe); background:var(--safe-fill); color:var(--safe);}
+
+  /* ---------- RTO/RPO calc ---------- */
+  .riskcalc{ display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:center;}
+  .rslider{ margin-bottom:16px;}
+  .rslider label{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+  .rslider input[type=range]{ width:100%; accent-color:var(--accent);}
+  .rslider .rval{ font-weight:700; color:var(--ink);}
+  .riskresult{ text-align:center; padding:22px 18px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface);}
+  .riskresult .rband{ font-family:var(--mono); font-size:20px; font-weight:700; letter-spacing:.02em; margin-bottom:6px;}
+  .riskresult .rscore{ font-family:var(--mono); font-size:12px; color:var(--ink-soft);}
+  .riskresult .rbar{ height:9px; background:var(--line); border-radius:20px; margin-top:14px; position:relative; overflow:hidden;}
+  .riskresult .rbar-fill{ height:100%; width:0%; border-radius:20px; transition:width .2s ease, background .2s ease;}
+
+  /* ---------- lifecycle steps ---------- */
+  .steps{ display:flex; flex-direction:column; gap:0; margin:22px 0;}
+  .step{ display:grid; grid-template-columns:56px 1fr; gap:16px; padding:16px 0; border-bottom:1px solid var(--line);}
+  .step:last-child{ border-bottom:none;}
+  .step-num{ font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent); border:1.5px solid var(--accent); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;}
+  .step h4{ font-family:var(--sans); font-weight:700; font-size:18px; margin:0 0 4px;}
+  .step p{ margin:0; font-size:16px; color:var(--ink-soft); max-width:none;}
+
+  /* ---------- worked example timeline ---------- */
+  .timeline{ position:relative; margin:24px 0 10px; padding-left:30px;}
+  .timeline::before{ content:""; position:absolute; left:12px; top:6px; bottom:6px; width:2px; background:var(--line);}
+  .tl-step{ position:relative; padding-bottom:20px;}
+  .tl-step:last-child{ padding-bottom:0;}
+  .tl-dot{ position:absolute; left:-30px; top:0; width:26px; height:26px; border-radius:50%; background:var(--panel); border:2px solid var(--step-accent, var(--info)); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10.5px; font-weight:700; color:var(--step-accent, var(--info));}
+  .tl-card{ border-radius:8px; border:1.5px solid var(--line); background:var(--panel); border-left:4px solid var(--step-accent, var(--info)); padding:12px 16px;}
+  .tl-card .tl-num{ font-family:var(--mono); font-size:10.5px; color:var(--step-accent, var(--info)); font-weight:700; letter-spacing:.03em;}
+  .tl-card p{ margin:3px 0 0; font-size:16px; max-width:none;}
+  .tl-card p.tl-detail{ font-weight:400; font-size:14.5px; color:var(--ink-soft); margin-top:4px;}
+
+  @media (max-width:860px){
+    .cards3, .cards2, .riskcalc, .house-wrap, .gauges, .umbrella-grid{ grid-template-columns:1fr;}
+    .chainflow{ flex-direction:column;}
+    .clink{ flex-direction:row; padding:8px 0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stripe"></div>
+<div class="topbar">
+  <div class="brand"><span class="code">DS5105</span><span class="name">Information Security, Lecture Note</span></div>
+  <button class="theme-toggle" id="themeToggle" type="button"><span class="dot"></span><span id="themeLabel">auto theme</span></button>
+</div>
+
+<div class="hero">
+  <div class="kicker">Continuing from Security Assurance Models</div>
+  <h1>Disaster and Recovery</h1>
+  <p class="sub">Assurance told us how to trust that controls work. This note is about the other half of that confidence, what happens when something outside the system takes it down anyway, and how a contingency plan gets it back up.</p>
+  <div class="gaugebar-hero" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc">
+    <a href="#foundations"><span class="n">01</span>What is a disaster</a>
+    <a href="#contingency"><span class="n">02</span>Contingency planning</a>
+    <a href="#bcpdrp"><span class="n">03</span>BCP vs DRP</a>
+    <a href="#targets"><span class="n">04</span>RTO &amp; RPO</a>
+    <a href="#sites"><span class="n">05</span>Recovery sites</a>
+    <a href="#backups"><span class="n">06</span>Backups</a>
+    <a href="#chain"><span class="n">07</span>The chain</a>
+    <a href="#lifecycle"><span class="n">08</span>Planning process</a>
+    <a href="#example"><span class="n">09</span>Worked example</a>
+    <a href="#selftest"><span class="n">10</span>Self-test</a>
+    <a href="#recap"><span class="n">11</span>Recap</a>
+  </nav>
+
+  <main style="margin-top:8px;">
+
+    <!-- ===== 1 FOUNDATIONS ===== -->
+    <section id="foundations" class="sec">
+      <div class="sec-head"><div class="sec-num">01</div><h2 class="title">What is a disaster</h2></div>
+      <p class="lede">In an information security context, a <strong>disaster</strong> is any event that interrupts normal operations or damages information assets badly enough that recovery needs a planned, structured response rather than a routine fix. Where the assurance lecture was mostly about <em>confidentiality</em> and <em>integrity</em>, this topic is mainly a fight to protect <strong>availability</strong>, the third pillar of the CIA triad.</p>
+
+      <p>The chain that leads to an outage looks a lot like the threat chain from last time. Click through the markers below.</p>
+
+      <div class="house-wrap">
+        <svg viewBox="0 0 320 260" aria-hidden="true">
+          <rect x="0" y="220" width="320" height="40" fill="var(--line)"/>
+          <rect x="70" y="80" width="150" height="140" fill="var(--surface)" stroke="var(--ink)" stroke-width="2.5"/>
+          <rect x="90" y="100" width="50" height="90" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>
+          <rect x="98" y="108" width="34" height="8" fill="var(--line)"/>
+          <rect x="98" y="122" width="34" height="8" fill="var(--line)"/>
+          <rect x="98" y="136" width="34" height="8" fill="var(--line)"/>
+          <rect x="98" y="150" width="34" height="8" fill="var(--line)"/>
+          <line x1="115" y1="190" x2="115" y2="205" stroke="var(--warn)" stroke-width="2.5"/>
+          <circle cx="115" cy="209" r="5" fill="var(--warn-fill)" stroke="var(--warn)" stroke-width="1.5"/>
+          <rect x="70" y="188" width="150" height="32" fill="var(--info-fill)" opacity="0.8"/>
+          <path d="M70 188 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="var(--info)" stroke-width="2"/>
+          <rect x="160" y="100" width="40" height="90" fill="var(--crit-fill)" stroke="var(--crit)" stroke-width="2"/>
+          <line x1="164" y1="104" x2="196" y2="186" stroke="var(--crit)" stroke-width="2"/>
+          <line x1="196" y1="104" x2="164" y2="186" stroke="var(--crit)" stroke-width="2"/>
+          <rect x="235" y="150" width="40" height="40" fill="var(--safe-fill)" stroke="var(--safe)" stroke-width="2"/>
+          <path d="M245 170 h20 M255 160 v20" stroke="var(--safe)" stroke-width="2.5"/>
+
+          <g class="hotspot" data-key="spof" tabindex="0"><circle class="ring" cx="115" cy="209" r="26" stroke="var(--warn)"/></g>
+          <g class="hotspot" data-key="trigger" tabindex="0"><circle class="ring" cx="145" cy="204" r="30" stroke="var(--info)"/></g>
+          <g class="hotspot" data-key="outage" tabindex="0"><circle class="ring" cx="180" cy="145" r="30" stroke="var(--crit)"/></g>
+          <g class="hotspot" data-key="control" tabindex="0"><circle class="ring" cx="255" cy="170" r="26" stroke="var(--safe)"/></g>
+        </svg>
+
+        <div>
+          <div class="house-info" id="houseInfo">
+            <span class="house-tag spof" id="hTag">Click a marker</span>
+            <p id="hText">This server room has four things happening at once: a single point of failure, a disaster trigger, an outage, and a recovery control. Click each marker to see how it fits.</p>
+          </div>
+          <p class="house-hint">Tip: work through them in order, amber, blue, red, teal.</p>
+        </div>
+      </div>
+
+      <h3 class="sub">Where disasters come from</h3>
+      <div class="cards3">
+        <div class="mini"><span class="tag info">Natural</span><h5>Environmental</h5><p>Floods, fires, earthquakes, storms, anything driven by the physical world.</p></div>
+        <div class="mini"><span class="tag crit">Technical</span><h5>Infrastructure</h5><p>Hardware failure, power loss, software corruption, network outages.</p></div>
+        <div class="mini"><span class="tag warn">Human</span><h5>Caused</h5><p>Ransomware, sabotage, accidental deletion, a bad configuration pushed live.</p></div>
+      </div>
+
+      <div class="callout">
+        <strong>The one-line version:</strong> a single point of failure becomes a disaster only once a trigger actually reaches it. Recovery planning exists to break that meeting, by removing the weak point, absorbing the trigger, or restoring service before the outage does real damage.
+      </div>
+    </section>
+
+    <!-- ===== 2 CONTINGENCY PLANNING ===== -->
+    <section id="contingency" class="sec">
+      <div class="sec-head"><div class="sec-num">02</div><h2 class="title">Contingency planning, the umbrella</h2></div>
+      <p class="lede">Before splitting into BCP and DRP, it helps to meet the term that sits above both. A <strong>contingency plan</strong> is the organisation's overall set of documented procedures for responding to a system or business disruption, restoring operations, and managing damage during and after the event. NIST's guidance, SP 800-34, treats it as the umbrella that several more specific plans sit under.</p>
+
+      <div class="umbrella">
+        <div class="umbrella-top">Information System Contingency Plan family, NIST SP 800-34</div>
+        <div class="umbrella-grid">
+          <div class="uplan bcp">Business Continuity Plan<small>keeps the business running</small></div>
+          <div class="uplan drp">Disaster Recovery Plan<small>restores IT after a disaster</small></div>
+          <div class="uplan coop">Continuity of Operations Plan<small>keeps essential functions alive at an alternate site</small></div>
+          <div class="uplan ccp">Crisis Communication Plan<small>what gets said, to whom, and when</small></div>
+          <div class="uplan cirp">Cyber Incident Response Plan<small>handles the security incident itself</small></div>
+          <div class="uplan oep">Occupant Emergency Plan<small>protects people and the physical site</small></div>
+        </div>
+      </div>
+
+      <p>A contingency plan is not one document, it is this whole family, each plan answering a narrower question so that nothing falls through the cracks between "keep the business alive" and "get this one server back online."</p>
+
+      <div class="callout info">
+        <strong>Why the umbrella matters for an exam question:</strong> if you are ever asked to place BCP, DRP, or incident response in relation to each other, contingency planning is the correct top level term, the others are its members, not synonyms for it.
+      </div>
+    </section>
+
+    <!-- ===== 3 BCP vs DRP ===== -->
+    <section id="bcpdrp" class="sec">
+      <div class="sec-head"><div class="sec-num">03</div><h2 class="title">Business continuity and disaster recovery</h2></div>
+      <p class="lede">The two members of that family you will use most often. They get used almost interchangeably outside class, but they answer different questions.</p>
+
+      <div class="cards2">
+        <div class="mini"><span class="tag info">BCP</span><h5>Business Continuity Plan</h5><p>Asks how the organisation keeps operating, even in a degraded state, while the disruption is happening. Covers people, alternate locations, and communication, not just computers.</p></div>
+        <div class="mini"><span class="tag safe">DRP</span><h5>Disaster Recovery Plan</h5><p>The technical subset of that plan. Asks how IT systems, data, and infrastructure get restored to an operational state after the disruption.</p></div>
+      </div>
+
+      <div class="formula">BCP keeps the business alive · DRP brings the technology back to life</div>
+
+      <div class="tblwrap">
+      <table>
+        <tr><th>Question</th><th>BCP</th><th>DRP</th></tr>
+        <tr><td>Scope</td><td>Whole business, all departments</td><td>IT systems and data specifically</td></tr>
+        <tr><td>Trigger</td><td>Any disruption to normal operations</td><td>Loss or damage to IT infrastructure</td></tr>
+        <tr><td>Typical owner</td><td>Executive or operations team</td><td>IT and security team</td></tr>
+        <tr><td>Output</td><td>Alternate processes, staffing, communication plans</td><td>Backup, failover, and restoration procedures</td></tr>
+      </table>
+      </div>
+    </section>
+
+    <!-- ===== 4 RTO & RPO ===== -->
+    <section id="targets" class="sec">
+      <div class="sec-head"><div class="sec-num">04</div><h2 class="title">RTO and RPO, the two numbers that drive everything</h2></div>
+      <p class="lede">Every recovery plan is really built around two targets, and once you can define both from memory, most disaster recovery questions become easy.</p>
+
+      <div class="tblwrap">
+      <table>
+        <tr><th>Term</th><th>Question it answers</th><th>Example</th></tr>
+        <tr><td><strong>RTO</strong>, Recovery Time Objective</td><td>How long can the system stay down before the damage is unacceptable</td><td>Online banking must be back within 2 hours</td></tr>
+        <tr><td><strong>RPO</strong>, Recovery Point Objective</td><td>How much data can we afford to lose, measured in time</td><td>Backups every 15 minutes, so at most 15 minutes of data is lost</td></tr>
+      </table>
+      </div>
+
+      <h3 class="sub">Try it</h3>
+      <div class="console">
+        <div class="console-label">Interactive, readiness estimator</div>
+        <div class="riskcalc">
+          <div>
+            <div class="rslider"><label>Recovery Time Objective, hours <span class="rval" id="tVal">12</span></label><input type="range" min="1" max="72" value="12" id="tSlider"></div>
+            <div class="rslider"><label>Recovery Point Objective, hours <span class="rval" id="vVal">4</span></label><input type="range" min="0" max="24" value="4" id="vSlider"></div>
+            <div class="rslider"><label>Service criticality <span class="rval" id="iVal">3</span></label><input type="range" min="1" max="5" value="3" id="iSlider"></div>
+          </div>
+          <div class="riskresult">
+            <div class="rband" id="riskBand">WARM SITE</div>
+            <div class="rscore" id="riskScore">roughly matches this recovery site tier</div>
+            <div class="rbar"><div class="rbar-fill" id="riskBarFill"></div></div>
+          </div>
+        </div>
+      </div>
+      <p class="mono" style="font-size:14.5px; color:var(--ink-soft);">A simplification. Real organisations set RTO and RPO per system through a formal Business Impact Analysis, not a single slider.</p>
+
+      <div class="callout accent">
+        A shorter RTO or RPO always costs more. Near zero data loss and near instant recovery means real time replication and a standby system running around the clock. Choosing these numbers is a business decision as much as a technical one.
+      </div>
+    </section>
+
+    <!-- ===== 5 RECOVERY SITES ===== -->
+    <section id="sites" class="sec">
+      <div class="sec-head"><div class="sec-num">05</div><h2 class="title">Recovery site strategies</h2></div>
+      <p class="lede">Once a disaster takes down the primary site, the organisation needs somewhere else to run from. The three classic options trade cost against how fast they can take over.</p>
+
+      <div class="gauges" id="gauges">
+        <div class="gauge">
+          <h5>Cold site</h5>
+          <div class="gauge-ring">
+            <svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="40"/><circle class="fill" cx="48" cy="48" r="40" style="stroke:var(--info)" data-target="25"/></svg>
+            <div class="gval">25%</div>
+          </div>
+          <p>Empty facility, power and space only. Cheapest, slowest, days to weeks.</p>
+        </div>
+        <div class="gauge">
+          <h5>Warm site</h5>
+          <div class="gauge-ring">
+            <svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="40"/><circle class="fill" cx="48" cy="48" r="40" style="stroke:var(--warn)" data-target="60"></circle></svg>
+            <div class="gval">60%</div>
+          </div>
+          <p>Hardware and connectivity ready, data still needs loading. Hours.</p>
+        </div>
+        <div class="gauge">
+          <h5>Hot site</h5>
+          <div class="gauge-ring">
+            <svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="40"/><circle class="fill" cx="48" cy="48" r="40" style="stroke:var(--crit)" data-target="95"></circle></svg>
+            <div class="gval">95%</div>
+          </div>
+          <p>Fully mirrored, always in sync. Most expensive, minutes to take over.</p>
+        </div>
+      </div>
+      <p class="mono" style="font-size:14px; color:var(--ink-soft);">Rings show readiness to take over, not cost. Cost runs the same direction, cold is cheapest, hot is the most expensive to maintain.</p>
+    </section>
+
+    <!-- ===== 6 BACKUPS ===== -->
+    <section id="backups" class="sec">
+      <div class="sec-head"><div class="sec-num">06</div><h2 class="title">Backup strategies</h2></div>
+      <p class="lede">Backups are the raw material recovery depends on. There is no disaster recovery plan without a backup that actually works, and actually gets tested.</p>
+
+      
+
+      <div class="tblwrap">
+      <table>
+        <tr><th>Strategy</th><th>Speed to create</th><th>Speed to restore</th><th>Storage cost</th></tr>
+        <tr><td>Full</td><td>Slow</td><td>Fast, one file set</td><td>High</td></tr>
+        <tr><td>Incremental</td><td>Fast</td><td>Slow, replay every increment</td><td>Low</td></tr>
+        <tr><td>Differential</td><td>Medium</td><td>Medium, full plus one file</td><td>Medium</td></tr>
+        <tr><td>Mirroring / replication</td><td>Continuous</td><td>Near instant</td><td>Highest</td></tr>
+      </table>
+      </div>
+
+      <div class="callout safe">
+        <strong>A backup that has never been restored and tested is not a real backup, it is a guess.</strong> Recovery testing belongs on the calendar, not just in the document. Backups also need their own security, an unencrypted backup is a confidentiality risk in its own right.
+      </div>
+      <h3 class="sub">Spot the strategy</h3>
+      <p>Click each scenario to reveal which backup strategy it describes.</p>
+      
+      <div class="matcher" id="backupMatcher">
+        <div class="mrow" data-cat="full"><span class="mtext">Every backup copies the entire dataset from scratch, every single time.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="incremental"><span class="mtext">Each backup copies only what changed since the last backup of any kind, so restoring means replaying every one in order.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="differential"><span class="mtext">Each backup copies everything changed since the last full backup, so restoring needs only the last full plus the latest one of these.</span><span class="mtag">?</span></div>
+        <div class="mrow" data-cat="mirroring"><span class="mtext">Data is written to a second live system continuously, so the standby copy is never more than seconds behind.</span><span class="mtag">?</span></div>
+      </div>
+    </section>
+
+    <!-- ===== 7 THE CHAIN ===== -->
+    <section id="chain" class="sec">
+      <div class="sec-head"><div class="sec-num">07</div><h2 class="title">The chain, and how to break it</h2></div>
+      <p class="lede">Line the ideas up and you get the anatomy of every outage: a <strong>disaster event</strong> exploits a <strong>single point of failure</strong>, producing an <strong>outage</strong>, which causes <strong>business impact</strong>. A control at any link breaks the whole chain.</p>
+
+      <div class="console">
+        <div class="console-label">Interactive, toggle a shield on any link</div>
+        <div class="chainflow" id="chainFlow">
+          <div class="cnode threat">DISASTER</div>
+          <div class="clink"><span class="arrow">&rarr;</span><button class="shieldbtn" data-link="1">shield off</button></div>
+          <div class="cnode vuln">SINGLE POINT OF FAILURE</div>
+          <div class="clink"><span class="arrow">&rarr;</span><button class="shieldbtn" data-link="2">shield off</button></div>
+          <div class="cnode attack">OUTAGE</div>
+          <div class="clink"><span class="arrow">&rarr;</span><button class="shieldbtn" data-link="3">shield off</button></div>
+          <div class="cnode impact">IMPACT</div>
+        </div>
+        <div class="chain-result" id="chainResult">All three links open, the incident happens in full.</div>
+      </div>
+
+      <div class="tblwrap">
+      <table>
+        <tr><th>Link</th><th>What a shield there means</th><th>Example control</th></tr>
+        <tr><td>Disaster &rarr; SPOF</td><td>Keep the trigger from ever reaching the weak point</td><td>Redundant power, geographic separation, flood barriers</td></tr>
+        <tr><td>SPOF &rarr; Outage</td><td>Remove the weak point itself</td><td>Redundant hardware, clustering, no single copy of anything</td></tr>
+        <tr><td>Outage &rarr; Impact</td><td>Catch the outage early and restore before damage compounds</td><td>Failover to a hot site, tested backups, incident response</td></tr>
+      </table>
+      </div>
+    </section>
+
+    <!-- ===== 8 PLANNING PROCESS ===== -->
+    <section id="lifecycle" class="sec">
+      <div class="sec-head"><div class="sec-num">08</div><h2 class="title">The contingency planning process</h2></div>
+      <p class="lede">NIST SP 800-34 lays out the process behind every plan in the family from Section 2, in seven steps. Like assurance, this is a loop you revisit, not a document you file away.</p>
+
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div><h4>Develop the contingency planning policy</h4><p>Set the authority, scope, and resources for planning before writing any procedure.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div><h4>Conduct the Business Impact Analysis</h4><p>Identify critical systems, and assign each one an RTO and RPO based on what losing it would cost.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div><h4>Identify preventive controls</h4><p>Reduce the odds and severity of a disruption in the first place, redundancy, surge protection, patching.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div><h4>Create contingency strategies</h4><p>Choose backup methods and recovery site tiers that meet the targets from step 2.</p></div></div>
+        <div class="step"><div class="step-num">5</div><div><h4>Develop the contingency plan</h4><p>Write the actual procedures, roles, and contacts needed to execute the strategy.</p></div></div>
+        <div class="step"><div class="step-num">6</div><div><h4>Test, train, and exercise</h4><p>Run drills and full failover tests. This is where an untested plan gets caught before a real event does.</p></div></div>
+        <div class="step"><div class="step-num">7</div><div><h4>Maintain the plan</h4><p>Update it as systems, staff, and threats change. A stale plan fails quietly, feeds back into step 1.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ===== 9 WORKED EXAMPLE ===== -->
+    <section id="example" class="sec">
+      <div class="sec-head"><div class="sec-num">09</div><h2 class="title">Worked example: a ransomware outage</h2></div>
+      <p class="lede">Let's run one realistic scenario through every stage, start to finish.</p>
+
+      <div class="timeline">
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--ink)">A</div><div class="tl-card" style="--step-accent:var(--ink)"><div class="tl-num">ASSET</div><p>The patient records system at a regional clinic, running on a single on-premise database server.</p></div></div>
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--warn)">S</div><div class="tl-card" style="--step-accent:var(--warn)"><div class="tl-num">SINGLE POINT OF FAILURE</div><p>No offsite copy of the database, all backups live on a drive attached to the same network.</p></div></div>
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--info)">D</div><div class="tl-card" style="--step-accent:var(--info)"><div class="tl-num">DISASTER TRIGGER</div><p>A phishing email delivers ransomware that spreads overnight, encrypting the database and the attached backup drive alike.</p></div></div>
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--crit)">O</div><div class="tl-card" style="--step-accent:var(--crit)"><div class="tl-num">OUTAGE</div><p>Staff cannot access patient records the next morning. Appointments are cancelled, clinical availability is gone.</p></div></div>
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--ink)">I</div><div class="tl-card" style="--step-accent:var(--ink)"><div class="tl-num">IMPACT</div><p>Days of lost service, breach notification obligations, and a ransom demand nobody should pay, since paying does not guarantee the data comes back.</p></div></div>
+        <div class="tl-step"><div class="tl-dot" style="--step-accent:var(--safe)">C</div><div class="tl-card" style="--step-accent:var(--safe)"><div class="tl-num">RECOVERY CONTROL</div><p>An offsite, offline backup the ransomware could never reach, restored to a warm site, would have brought the clinic back within hours instead of days.</p></div></div>
+      </div>
+
+      <div class="callout warn">
+        Notice this is the chain from Section 7 walked end to end on a real system, and the fix at the bottom closes the gap at the earliest possible link.
+      </div>
+    </section>
+
+    <!-- ===== 10 SELF-TEST ===== -->
+    <section id="selftest" class="sec">
+      <div class="sec-head"><div class="sec-num">10</div><h2 class="title">Quick self-test</h2></div>
+      <p class="lede">Try to answer before you open each one.</p>
+
+      <details class="qa"><summary>Q1. A company sets an RPO of 1 hour for its sales database. What does this actually commit them to?</summary><p class="a">Backing up, or replicating, that database at least every hour, so at most one hour of transactions is ever lost. It says nothing about how fast the system comes back online, that is RTO's job.</p></details>
+      <details class="qa"><summary>Q2. Where does a Cyber Incident Response Plan sit relative to a contingency plan?</summary><p class="a">It is one member of the contingency plan family, focused specifically on detecting and handling the security incident itself, alongside BCP, DRP, and the others. Contingency planning is the umbrella term, not a synonym for any one of them.</p></details>
+      <details class="qa"><summary>Q3. Why might a company choose a warm site over a hot site, even for a fairly important system?</summary><p class="a">Cost. A hot site needs a fully mirrored environment running continuously. If the system can tolerate a few hours of downtime, a warm site delivers most of the resilience for a fraction of the cost.</p></details>
+      <details class="qa"><summary>Q4. A team keeps nightly full backups but has never tried restoring from one. What is wrong here?</summary><p class="a">An untested backup is only a guess. Corruption or a broken restore process is only discovered during a test, and finding out during a real disaster is far too late.</p></details>
+      <details class="qa"><summary>Q5. Two clinics have identical backup schedules. Clinic A stores backups on a drive attached to the production network. Clinic B keeps its backups offline and offsite. Same risk from ransomware?</summary><p class="a">No. Ransomware that spreads across the network can encrypt Clinic A's attached backup along with production, leaving nothing to restore from. Clinic B's offline, offsite copy is unreachable by the same attack, which is why isolation counts as a control in its own right.</p></details>
+    </section>
+
+    <!-- ===== 11 RECAP ===== -->
+    <section id="recap" class="sec" style="border-bottom:none;">
+      <div class="sec-head"><div class="sec-num">11</div><h2 class="title">Recap &amp; glossary</h2></div>
+
+      <h3 class="sub">Take this away</h3>
+      <ul style="max-width:66ch; font-size:16.5px; color:var(--ink-soft);">
+        <li>Disaster and recovery planning exists mainly to protect <strong style="color:var(--ink)">availability</strong>, the pillar assurance alone does not guarantee.</li>
+        <li>A <strong style="color:var(--ink)">contingency plan</strong> is the umbrella, BCP, DRP, COOP, crisis communication, incident response, and occupant emergency plans are its members.</li>
+        <li><strong style="color:var(--ink)">RTO</strong> is about time to restore, <strong style="color:var(--ink)">RPO</strong> is about how much data you can afford to lose, both drive cost.</li>
+        <li>Recovery sites trade cost against speed, cold is cheap and slow, hot is expensive and near instant.</li>
+        <li>A backup that has never been restored and tested is not a real backup, it is a guess.</li>
+        <li>Planning is a loop, policy, BIA, controls, strategy, plan, test, maintain, repeat.</li>
+      </ul>
+
+           <div><p><strong>Refer: </strong><a href="https://cloud.google.com/learn/what-is-disaster-recovery">what-is-disaster-recovery from google cloud<a/></p></div>
+
+
+      <h3 class="sub">Glossary</h3>
+      <dl class="glossary">
+        <dt>Disaster</dt><dd>An event that interrupts normal operations or damages information assets badly enough to require a planned recovery response.</dd>
+        <dt>Contingency plan</dt><dd>The umbrella term for an organisation's documented procedures for responding to and recovering from a disruption.</dd>
+        <dt>Business Continuity Plan, BCP</dt><dd>The organisation wide plan for continuing operations during and after a disruption.</dd>
+        <dt>Disaster Recovery Plan, DRP</dt><dd>The technical plan for restoring IT systems and data after a disruption.</dd>
+        <dt>Continuity of Operations Plan, COOP</dt><dd>Keeps an organisation's essential functions running from an alternate location.</dd>
+        <dt>Recovery Time Objective, RTO</dt><dd>The maximum acceptable length of downtime before the damage becomes unacceptable.</dd>
+        <dt>Recovery Point Objective, RPO</dt><dd>The maximum acceptable amount of data loss, measured as a length of time.</dd>
+        <dt>Cold, warm, hot site</dt><dd>Backup facilities ranging from empty space to a fully mirrored, always-synced environment.</dd>
+        <dt>Single point of failure, SPOF</dt><dd>Any component whose failure alone can bring down the whole system.</dd>
+        <dt>Business Impact Analysis, BIA</dt><dd>The process of identifying critical systems and setting their RTO and RPO based on the cost of losing them.</dd>
+      </dl>
+
+      <div class="activity">
+        <h4>Before next lecture</h4>
+        <p style="max-width:none;">Pick any service you rely on daily, an app, a university portal, a bank. Write down its likely single point of failure, what disaster could trigger it, what the outage would look like from your side, and which member of the contingency plan family would actually own the response. Bring it to class.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>DS5105 &middot; Information Security, Lecture Note &middot; Disaster and Recovery</footer>
+
+<script>
+  (function(){
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    const label = document.getElementById('themeLabel');
+    const stored = (function(){ try { return localStorage.getItem('dr-theme'); } catch(e){ return null; } })();
+    const modes = ['auto','light','dark'];
+    let mode = modes.includes(stored) ? stored : 'auto';
+    function apply(){
+      if (mode === 'auto') { root.removeAttribute('data-theme'); label.textContent = 'auto theme'; }
+      else { root.setAttribute('data-theme', mode); label.textContent = mode + ' theme'; }
+      try { localStorage.setItem('dr-theme', mode); } catch(e){}
+    }
+    apply();
+    btn.addEventListener('click', () => { mode = modes[(modes.indexOf(mode) + 1) % modes.length]; apply(); });
+  })();
+
+  const tocLinks = Array.from(document.querySelectorAll('#toc a'));
+  const secs = tocLinks.map(a => document.querySelector(a.getAttribute('href')));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const idx = secs.indexOf(entry.target);
+      if (idx === -1) return;
+      if (entry.isIntersecting) { tocLinks.forEach(a => a.classList.remove('active')); tocLinks[idx].classList.add('active'); }
+    });
+  }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+  secs.forEach(sec => sec && io.observe(sec));
+
+  const houseInfo = {
+    spof: { tag: 'Single point of failure', cls: 'spof', text: 'The rack has one power feed and one drive holding the only copy of the data. On its own it harms no one, it is simply waiting.' },
+    trigger: { tag: 'Disaster trigger', cls: 'trigger', text: 'Flood water is rising through the server room. This is the event with the potential to cause harm, it has not caused any damage yet on its own.' },
+    outage: { tag: 'Outage', cls: 'outage', text: 'The water reaches the rack with no redundant feed, and the service goes dark. The trigger has now met the weak point, this is the actual event.' },
+    control: { tag: 'Recovery control', cls: 'control', text: 'A backup generator, an offsite replica, or a tested failover to a warm site. Any of these could have broken the chain.' }
+  };
+  const hTag = document.getElementById('hTag');
+  const hText = document.getElementById('hText');
+  document.querySelectorAll('.hotspot').forEach(spot => {
+    spot.addEventListener('click', () => {
+      document.querySelectorAll('.hotspot').forEach(s => s.classList.remove('active'));
+      spot.classList.add('active');
+      const d = houseInfo[spot.getAttribute('data-key')];
+      hTag.className = 'house-tag ' + d.cls;
+      hTag.textContent = d.tag;
+      hText.textContent = d.text;
+    });
+    spot.addEventListener('keypress', (e) => { if (e.key === 'Enter') spot.click(); });
+  });
+
+  document.querySelectorAll('#backupMatcher .mrow').forEach(row => {
+    row.addEventListener('click', () => {
+      if (row.classList.contains('revealed')) return;
+      row.classList.add('revealed');
+      row.querySelector('.mtag').textContent = row.getAttribute('data-cat');
+    });
+  });
+
+  const shields = document.querySelectorAll('.shieldbtn');
+  const chainResult = document.getElementById('chainResult');
+  function updateChain() {
+    const [t1, t2, t3] = Array.from(shields).map(s => s.classList.contains('on'));
+    if (t1) { chainResult.textContent = 'Disaster kept from ever reaching the weak point, no outage.'; chainResult.classList.add('safe'); }
+    else if (t2) { chainResult.textContent = 'Single point of failure removed, nothing left to fail onto. No outage.'; chainResult.classList.add('safe'); }
+    else if (t3) { chainResult.textContent = 'Outage detected and recovered before real business impact.'; chainResult.classList.add('safe'); }
+    else { chainResult.textContent = 'All three links open, the incident happens in full.'; chainResult.classList.remove('safe'); }
+  }
+  shields.forEach(b => b.addEventListener('click', () => { const on = b.classList.toggle('on'); b.textContent = on ? 'shield on' : 'shield off'; updateChain(); }));
+
+  const tSlider = document.getElementById('tSlider'), vSlider = document.getElementById('vSlider'), iSlider = document.getElementById('iSlider');
+  const tVal = document.getElementById('tVal'), vVal = document.getElementById('vVal'), iVal = document.getElementById('iVal');
+  const riskBand = document.getElementById('riskBand'), riskScore = document.getElementById('riskScore'), riskBarFill = document.getElementById('riskBarFill');
+  function updateRisk() {
+    const rto = parseInt(tSlider.value, 10), rpo = parseInt(vSlider.value, 10), crit = parseInt(iSlider.value, 10);
+    tVal.textContent = rto; vVal.textContent = rpo; iVal.textContent = crit;
+    const urgency = ((73 - rto) / 72) * 50 + ((25 - rpo) / 25) * 25 + (crit / 5) * 25;
+    const pct = Math.max(5, Math.min(100, Math.round(urgency)));
+    riskBarFill.style.width = pct + '%';
+    let band, color;
+    if (pct <= 35) { band = 'COLD SITE'; color = 'var(--info)'; }
+    else if (pct <= 70) { band = 'WARM SITE'; color = 'var(--warn)'; }
+    else { band = 'HOT SITE'; color = 'var(--crit)'; }
+    riskBand.textContent = band; riskBand.style.color = color; riskBarFill.style.background = color;
+    riskScore.textContent = 'readiness demand: ' + pct + ' / 100';
+  }
+  [tSlider, vSlider, iSlider].forEach(s => s.addEventListener('input', updateRisk));
+  updateRisk();
+
+  const gaugeIo = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.gauge-ring .fill').forEach(f => {
+          const pct = parseInt(f.getAttribute('data-target'), 10);
+          const offset = 251 - (251 * pct / 100);
+          f.style.strokeDashoffset = offset;
+        });
+        gaugeIo.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  const gaugeBlock = document.getElementById('gauges');
+  if (gaugeBlock) gaugeIo.observe(gaugeBlock);
+</script>
+</body>
+</html>
