@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secret Key Cryptography and DES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --surface: #ffffff;
+    --surface-tint: #f0eee6;
+    --ink: #1e2430;
+    --ink-soft: #52596a;
+    --ink-faint: #838a9a;
+    --accent: #1d4ed8;
+    --accent-deep: #16389c;
+    --accent-soft: #e3eafc;
+    --accent-line: #b9c9f5;
+    --line: #e1ddd1;
+    --good: #1a7a4c;
+    --good-soft: #dcefe3;
+    --warn: #b5730a;
+    --warn-soft: #fdf0da;
+    --bad: #b3261e;
+    --bad-soft: #fbe2e0;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14161c;
+    --surface: #1b1e26;
+    --surface-tint: #21242e;
+    --ink: #e9e9ec;
+    --ink-soft: #b3b6c2;
+    --ink-faint: #82869a;
+    --accent: #7d9bff;
+    --accent-deep: #a9bcff;
+    --accent-soft: #232a44;
+    --accent-line: #384372;
+    --line: #2c2f3a;
+    --good: #4fbf8a;
+    --good-soft: #16311f;
+    --warn: #e0a94a;
+    --warn-soft: #35270f;
+    --bad: #e97b73;
+    --bad-soft: #3a1917;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.65;
+    margin: 0;
+    padding-inline: 20px;
+    padding-block: 12px 70px;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  h1, h2, h3 {
+    font-family: "Literata", Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .wrap { max-width: 940px; margin-inline: auto; }
+
+  code, .mono { font-family: "JetBrains Mono", "Courier New", monospace; }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    padding: 6px 14px 6px 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    user-select: none;
+  }
+  .theme-toggle .knob {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.25s ease, transform 0.4s ease;
+  }
+  .theme-toggle .knob svg { width: 15px; height: 15px; }
+  [data-theme="dark"] .theme-toggle .knob { transform: rotate(180deg); }
+  .theme-toggle .icon-sun { color: var(--warn); display: block; }
+  .theme-toggle .icon-moon { color: var(--accent); display: none; }
+  [data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+  /* ---------- Progress bar ---------- */
+  .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 55; }
+  .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); }
+
+  /* ---------- Reveal on scroll ---------- */
+  .reveal { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead { border-bottom: 2px solid var(--ink); padding: 30px 0 22px; margin-bottom: 30px; }
+  .eyebrow {
+    font-family: "JetBrains Mono", monospace; font-size: 13.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); display: inline-block; }
+  h1.title { font-size: clamp(32px, 4vw, 46px); font-weight: 600; line-height: 1.15; margin-bottom: 10px; max-width: 20ch; }
+  .subtitle { color: var(--ink-soft); font-size: 19px; max-width: 64ch; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; font-size: 14.5px; color: var(--ink-faint); font-family: "JetBrains Mono", monospace; }
+  .meta-row span { white-space: nowrap; }
+
+  /* ---------- TOC ---------- */
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 34px;
+    position: sticky; top: 10px; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(6px); padding: 8px 0;
+  }
+  .toc a {
+    text-decoration: none; color: var(--accent-deep); background: var(--accent-soft);
+    border: 1px solid var(--accent-line); padding: 6px 12px; border-radius: 20px;
+    font-size: 15px; font-weight: 600; transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .toc a:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }
+  .toc a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ---------- Framing panel ---------- */
+  .framing { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; margin-bottom: 40px; }
+  .framing p { margin: 0 0 10px; color: var(--ink-soft); }
+  .framing p:last-child { margin-bottom: 0; }
+  .framing strong { color: var(--ink); }
+
+  /* ---------- Sections ---------- */
+  section.block { margin-bottom: 54px; scroll-margin-top: 60px; }
+  .block-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+  .block-num { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--accent); font-weight: 700; }
+  .block-head h2 { font-size: 29px; font-weight: 600; }
+  .block-dek { color: var(--ink-soft); font-size: 17px; margin: 8px 0 20px; max-width: 68ch; }
+
+  p { margin: 0 0 14px; max-width: 74ch; }
+  .lede { font-size: 19.5px; color: var(--ink); }
+
+  h3.sub { font-size: 19px; margin: 30px 0 12px; }
+  h4.mini { font-size: 16px; margin: 18px 0 8px; color: var(--ink); }
+
+  .definition { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0 20px; }
+  .definition .label { font-family: "JetBrains Mono", monospace; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent-deep); display: block; margin-bottom: 6px; }
+  .definition p { margin: 0; color: var(--ink); font-size: 17.5px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 18px 0 22px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.08); border-color: var(--accent-line); }
+  .card h4 { font-size: 17px; font-weight: 700; margin: 0 0 6px; color: var(--ink); font-family: "Literata", serif; }
+  .card p { font-size: 15.5px; color: var(--ink-soft); margin: 0; }
+  .card .num { font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .card .tag { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.05em; color: var(--accent-deep); background: var(--accent-soft); padding: 2px 8px; border-radius: 12px; margin-bottom: 8px; }
+
+  ul.plain, ol.plain { margin: 0 0 16px; padding-left: 20px; }
+  ul.plain li, ol.plain li { margin-bottom: 8px; color: var(--ink-soft); max-width: 68ch; }
+  ul.plain li strong, ol.plain li strong { color: var(--ink); }
+
+  .example { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-tint); border-radius: 8px; padding: 12px 16px; margin: 6px 0 18px; }
+  .example .icon { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; padding-top: 2px; }
+  .example p { margin: 0; font-size: 16px; color: var(--ink-soft); font-style: italic; }
+
+  .data-table { width: 100%; border-collapse: collapse; margin: 8px 0 24px; font-size: 16px; }
+  .table-wrap { overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 10px; }
+  .data-table th, .data-table td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .data-table th { font-family: "JetBrains Mono", monospace; font-size: 12.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; background: var(--surface-tint); }
+  .data-table tbody tr:hover { background: var(--accent-soft); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table td { color: var(--ink-soft); }
+  .data-table td.category { color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+  /* ---------- Number-grid tables (DES permutation tables) ---------- */
+  .bit-table-wrap { overflow-x: auto; margin: 10px 0 20px; }
+  table.bit-table { border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 14px; }
+  table.bit-table td, table.bit-table th {
+    border: 1px solid var(--line); padding: 6px 9px; text-align: center; min-width: 30px; color: var(--ink-soft);
+  }
+  table.bit-table th { background: var(--surface-tint); color: var(--ink-faint); font-weight: 600; }
+  .bit-table-caption { font-size: 13px; color: var(--ink-faint); margin: -6px 0 16px; font-family: "JetBrains Mono", monospace; }
+  details.tables-toggle { margin: 16px 0 22px; border: 1px solid var(--line); border-radius: 10px; padding: 4px 16px; background: var(--surface); }
+  details.tables-toggle summary { cursor: pointer; padding: 12px 0; font-weight: 600; color: var(--accent-deep); font-size: 15.5px; list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.tables-toggle summary::-webkit-details-marker { display: none; }
+  details.tables-toggle summary::before { content: "▸"; transition: transform 0.2s ease; display: inline-block; }
+  details.tables-toggle[open] summary::before { transform: rotate(90deg); }
+  details.tables-toggle .inner { padding-bottom: 16px; }
+
+  /* ============================================================
+     SECTION 1: Secret key exchange animation
+  ============================================================ */
+  .exchange-diagram {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 20px;
+    margin: 22px 0 10px;
+  }
+  .party { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .party .avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    background: var(--accent-soft); border: 2px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Literata", serif; font-weight: 700; font-size: 22px; color: var(--accent-deep);
+  }
+  .party .name { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-soft); }
+  .key-badge {
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--good);
+    background: var(--good-soft); padding: 3px 9px; border-radius: 10px;
+  }
+  .channel { position: relative; height: 90px; display: flex; align-items: center; }
+  .channel .rail { position: relative; width: 100%; height: 2px; background: var(--line); border-radius: 2px; }
+  .channel .packet {
+    position: absolute; top: 50%; left: -10%;
+    transform: translateY(-50%);
+    width: 40px; height: 28px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    font-family: "JetBrains Mono", monospace; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .channel .packet { animation: travel 4s ease-in-out infinite; }
+  }
+  @keyframes travel {
+    0% { left: -6%; opacity: 0; content: "P"; }
+    8% { opacity: 1; }
+    45% { left: 47%; opacity: 1; }
+    50% { left: 47%; opacity: 1; }
+    92% { opacity: 1; }
+    100% { left: 106%; opacity: 0; }
+  }
+  .channel .eavesdropper {
+    position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--bad);
+    background: var(--bad-soft); padding: 3px 10px; border-radius: 10px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .channel .eavesdropper::before { content: "●"; font-size: 8px; }
+
+  /* ============================================================
+     SECTION 2: Feistel round interactive diagram
+  ============================================================ */
+  .feistel-widget {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px 22px 20px; margin: 22px 0 10px;
+  }
+  .feistel-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .round-readout { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink); }
+  .round-readout strong { color: var(--accent); font-size: 20px; }
+  .feistel-buttons { display: flex; gap: 8px; }
+  .fbtn {
+    font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-deep);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .fbtn:hover { background: var(--accent); color: #fff; }
+  .fbtn:active { transform: scale(0.96); }
+  .fbtn.primary { background: var(--accent); color: #fff; }
+  .fbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .feistel-stage { display: grid; grid-template-columns: 90px 1fr 90px; gap: 16px; align-items: stretch; }
+  .lr-col { display: flex; flex-direction: column; gap: 46px; justify-content: center; }
+  .lr-box {
+    height: 56px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace; border: 2px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-deep);
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    font-size: 13px; font-weight: 700;
+  }
+  .lr-box .sub { font-size: 10px; font-weight: 500; opacity: 0.7; margin-top: 2px; }
+  .lr-box.flash { background: var(--accent); color: #fff; transform: scale(1.05); }
+  .fn-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
+  .f-box {
+    width: 100%; max-width: 220px; border: 2px dashed var(--accent-line); border-radius: 10px;
+    padding: 14px 10px; text-align: center; background: var(--surface-tint);
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  .f-box.active { border-color: var(--accent); background: var(--accent-soft); border-style: solid; }
+  .f-box .f-label { font-family: "Literata", serif; font-weight: 700; font-size: 18px; color: var(--ink); }
+  .f-box .f-key { font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent-deep); margin-top: 4px; }
+  .xor-badge {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink-faint);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--ink-soft);
+    font-family: "JetBrains Mono", monospace; background: var(--surface);
+  }
+  .feistel-caption { text-align: center; font-size: 13.5px; color: var(--ink-faint); margin-top: 16px; font-family: "JetBrains Mono", monospace; }
+
+  .flow-strip {
+    display: flex; align-items: stretch; gap: 0; margin: 20px 0 8px; flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1 1 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; min-width: 140px; position: relative;
+  }
+  .flow-step .k { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 5px; }
+  .flow-step h4 { margin: 0 0 5px; font-size: 15.5px; font-family: "Literata", serif; }
+  .flow-step p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 18px; flex: 0 0 30px; }
+  @media (max-width: 700px) { .flow-strip { flex-direction: column; } .flow-arrow { transform: rotate(90deg); padding: 6px 0; } }
+
+  /* Key schedule shift animation */
+  .keysched {
+    display: flex; align-items: center; justify-content: center; gap: 18px; margin: 20px 0 10px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 20px;
+  }
+  .halfkey {
+    display: flex; gap: 3px;
+  }
+  .bitcell {
+    width: 16px; height: 26px; border-radius: 3px; background: var(--accent-soft); border: 1px solid var(--accent-line);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .halfkey.shift .bitcell { animation: shiftleft 3s ease-in-out infinite; }
+    .halfkey.shift .bitcell:nth-child(1) { animation-delay: 0s; }
+  }
+  @keyframes shiftleft {
+    0%, 8% { transform: translateX(0); }
+    45%, 55% { transform: translateX(-19px); opacity: 0.4; }
+    56% { transform: translateX(120px); opacity: 0; }
+    57% { transform: translateX(-120px); opacity: 0; }
+    92%, 100% { transform: translateX(0); opacity: 1; }
+  }
+  .keysched-label { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ink-faint); text-align: center; margin-top: 8px; }
+
+  /* S-box worked example */
+  .sbox-demo { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin: 20px 0; }
+  .sbox-bits { display: flex; gap: 4px; justify-content: center; margin: 14px 0; flex-wrap: wrap; }
+  .sbox-bit {
+    width: 34px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 16px;
+    background: var(--surface-tint); border: 2px solid var(--line); color: var(--ink-soft);
+  }
+  .sbox-bit.row { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); }
+  .sbox-bit.col { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
+  .sbox-legend { display: flex; gap: 18px; justify-content: center; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; flex-wrap: wrap; }
+  .sbox-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sbox-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .sbox-legend i.row { background: var(--warn); }
+  .sbox-legend i.col { background: var(--accent); }
+  .sbox-result { text-align: center; margin-top: 16px; font-family: "JetBrains Mono", monospace; }
+  .sbox-result .big { font-size: 26px; font-weight: 700; color: var(--good); }
+
+  /* ============================================================
+     SECTION 3: Mode of operation tabs + animated diagrams
+  ============================================================ */
+  .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 20px 0 18px; }
+  .mode-tab {
+    font-family: "JetBrains Mono", monospace; font-size: 13.5px; font-weight: 700;
+    padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-soft); cursor: pointer; transition: all 0.15s ease;
+  }
+  .mode-tab:hover { border-color: var(--accent-line); color: var(--accent-deep); }
+  .mode-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  .mode-diagram {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px 22px; margin-bottom: 16px; overflow-x: auto;
+  }
+  .mode-row { display: flex; align-items: center; gap: 10px; min-width: max-content; padding: 6px 0; }
+  .mode-row .row-label { width: 90px; flex: 0 0 90px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ink-faint); text-align: right; }
+  .blk {
+    width: 54px; height: 40px; border-radius: 6px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 700;
+    border: 2px solid var(--line); background: var(--surface-tint); color: var(--ink-soft);
+  }
+  .blk.pt { border-color: var(--ink-faint); color: var(--ink); }
+  .blk.ct { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-deep); }
+  .blk.enc {
+    width: 44px; height: 44px; border-radius: 50%;
+    border-color: var(--good); background: var(--good-soft); color: var(--good);
+    font-size: 10px;
+  }
+  .blk.xor {
+    width: 30px; height: 30px; border-radius: 50%;
+    border-color: var(--warn); background: var(--warn-soft); color: var(--warn); font-size: 13px;
+  }
+  .arrow-mini { color: var(--ink-faint); font-size: 15px; flex: 0 0 auto; }
+  .arrow-down { color: var(--ink-faint); font-size: 14px; text-align: center; width: 54px; flex: 0 0 54px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mode-panel.active .pulse { animation: pulseblock 2.6s ease-in-out infinite; }
+    .mode-panel.active .pulse:nth-of-type(1) { animation-delay: 0s; }
+    .mode-panel.active .pulse:nth-of-type(2) { animation-delay: 0.5s; }
+    .mode-panel.active .pulse:nth-of-type(3) { animation-delay: 1s; }
+    .mode-panel.active .pulse:nth-of-type(4) { animation-delay: 1.5s; }
+  }
+  @keyframes pulseblock {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+    15% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent); }
+  }
+
+  .mode-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .mode-meta .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .mode-meta .stat .k { font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); display: block; margin-bottom: 4px; }
+  .mode-meta .stat .v { font-size: 14.5px; color: var(--ink); font-weight: 600; }
+  .mode-meta .stat.good .v { color: var(--good); }
+  .mode-meta .stat.bad .v { color: var(--bad); }
+  .mode-meta .stat.warn .v { color: var(--warn); }
+
+  /* ============================================================
+     SECTION 4: 3DES EDE pipeline
+  ============================================================ */
+  .ede-pipeline { display: flex; align-items: center; gap: 0; margin: 22px 0 10px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 20px; justify-content: center; }
+  .ede-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ede-box {
+    width: 78px; height: 78px; border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: "Literata", serif; font-weight: 700; font-size: 22px;
+    border: 2px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-deep);
+  }
+  .ede-box.decrypt { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+  .ede-box .keylabel { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .ede-tag { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--ink-faint); }
+  .ede-arrow { color: var(--ink-faint); font-size: 20px; padding: 0 10px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .ede-box { animation: edeglow 4.5s ease-in-out infinite; }
+    .ede-box:nth-of-type(1) { animation-delay: 0s; }
+  }
+  .ede-pipeline .ede-stage:nth-child(1) .ede-box { animation: edeglow 4.5s ease-in-out infinite; animation-delay: 0s; }
+  .ede-pipeline .ede-stage:nth-child(3) .ede-box { animation: edeglow 4.5s ease-in-out infinite; animation-delay: 1.5s; }
+  .ede-pipeline .ede-stage:nth-child(5) .ede-box { animation: edeglow 4.5s ease-in-out infinite; animation-delay: 3s; }
+  @keyframes edeglow {
+    0%, 20%, 100% { box-shadow: none; transform: scale(1); }
+    5% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 18%, transparent); transform: scale(1.06); }
+  }
+  @media (max-width: 640px) { .ede-pipeline { flex-direction: column; } .ede-arrow { transform: rotate(90deg); padding: 8px 0; } }
+
+  /* Brute force comparison bars */
+  .bruteforce { margin: 22px 0 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+  .bf-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .bf-row:last-child { margin-bottom: 0; }
+  .bf-label { width: 150px; flex: 0 0 150px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-soft); }
+  .bf-track { flex: 1; height: 22px; background: var(--surface-tint); border-radius: 6px; overflow: hidden; position: relative; }
+  .bf-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); width: 0%; transition: width 1.6s cubic-bezier(.3,.7,.2,1); }
+  .bf-val { width: 90px; flex: 0 0 90px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-faint); text-align: right; }
+
+  /* ---------- Takeaway box ---------- */
+  .takeaway { background: var(--ink); color: var(--bg); border-radius: 12px; padding: 26px 26px 24px; margin-top: 10px; }
+  :root[data-theme="dark"] .takeaway { background: var(--surface-tint); border: 1px solid var(--line); }
+  .takeaway .label { font-family: "JetBrains Mono", monospace; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.65; display: block; margin-bottom: 12px; }
+  .takeaway ol { margin: 0 0 16px; padding-left: 20px; }
+  .takeaway ol li { margin-bottom: 8px; opacity: 0.92; }
+  .takeaway .closing { margin: 14px 0 0; opacity: 0.85; font-size: 15.5px; border-top: 1px solid rgba(128,128,128,0.28); padding-top: 14px; }
+
+  .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" type="button">
+  <span class="knob">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+  </span>
+  <span id="themeLabel">Light</span>
+</button>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">DS5103 &middot; Information Security</div>
+    <h1 class="title">Secret Key Cryptography and DES</h1>
+    <p class="subtitle">How a shared key turns readable data into nonsense and back again, how the Data Encryption Standard actually does it round by round, how block ciphers scale up to whole messages, and why one round of DES eventually needed to become three.</p>
+  </div>
+
+  <nav class="toc" id="toc">
+    <a href="#secret-key">1. Secret key cryptography</a>
+    <a href="#des">2. DES</a>
+    <a href="#ede">3. Multiple encryption DES</a>
+    <a href="#takeaways">Takeaways</a>
+  </nav>
+
+  <div class="framing reveal">
+    <p><strong>Where this fits.</strong> Last lecture's mechanisms, encryption, hashing, signatures, all rest on cryptography actually working. This lecture opens that box for the symmetric side: one shared secret, used to scramble data and to unscramble it again. DES is the historical anchor for this whole family of algorithms, and understanding its internals makes every modern block cipher, including AES, far easier to read.</p>
+    <p>4 ideas build on each other here: what a secret key even buys you, how DES turns a key and a block of data into ciphertext through 16 repeated rounds, how you stretch a cipher that only handles 64 bits at a time across a message of any length, and how three rounds of DES were stitched together to outlive DES's key size problem.</p>
+  </div>
+
+  <section class="block" id="secret-key">
+    <div class="block-head reveal">
+      <span class="block-num">01</span>
+      <h2>Secret key cryptography</h2>
+    </div>
+    <p class="block-dek reveal">One key, shared in advance, does both jobs: locking the message and unlocking it again.</p>
+
+    <div class="definition reveal">
+      <span class="label">Definition</span>
+      <p>Secret key cryptography, also called symmetric key cryptography, uses the exact same key to encrypt a message and to decrypt it. Whoever holds the key can do either operation, which means both the sender and the receiver need a copy of it before any secret communication can happen.</p>
+    </div>
+
+    <p class="reveal">Watch the diagram below. Alice encrypts her plaintext P into ciphertext C using key K. That ciphertext travels over a channel anyone might be listening on. Without the key, the eavesdropper sees only noise. Bob, holding the same key K, reverses the operation and recovers P exactly.</p>
+
+    <div class="exchange-diagram reveal">
+      <div class="party">
+        <div class="avatar">A</div>
+        <div class="name">Alice</div>
+        <div class="key-badge">holds key K</div>
+      </div>
+      <div class="channel">
+        <div class="eavesdropper">Eve, listening</div>
+        <div class="rail"></div>
+        <div class="packet">C</div>
+      </div>
+      <div class="party">
+        <div class="avatar">B</div>
+        <div class="name">Bob</div>
+        <div class="key-badge">holds key K</div>
+      </div>
+    </div>
+    <p class="reveal" style="font-size: 14.5px; color: var(--ink-faint); text-align: center; margin-top: -4px;">The packet crossing the channel is ciphertext. Eve can capture it freely, she just cannot read it without K.</p>
+
+    <h3 class="sub reveal">Why this is harder than it sounds</h3>
+    <p class="reveal">The entire scheme depends on one requirement that has nothing to do with mathematics: Alice and Bob need to agree on K before they can talk securely, and they need to do that agreeing over some channel that is itself trustworthy. This is called the key distribution problem, and it is the single biggest practical weakness of symmetric cryptography. Public key cryptography, covered separately, exists largely to solve exactly this problem.</p>
+
+    <div class="card-grid reveal">
+      <div class="card">
+        <h4>Kerckhoffs's principle</h4>
+        <p>A cipher should stay secure even if everything about the algorithm is public knowledge. Only the key needs to remain secret. DES, AES, and essentially every serious modern cipher are published in full detail and still considered secure, because their security lives in the key, not in obscurity.</p>
+      </div>
+      <div class="card">
+        <h4>Block ciphers</h4>
+        <p>Operate on fixed size chunks of data at a time, 64 bits for DES, one hundred twenty 8 bits for AES. A block goes in, a block of the same size comes out.</p>
+      </div>
+      <div class="card">
+        <h4>Stream ciphers</h4>
+        <p>Encrypt data one bit or byte at a time by combining it with a continuously generated keystream, usually through XOR. Useful when data arrives as a stream rather than in fixed chunks.</p>
+      </div>
+    </div>
+
+    <p class="reveal">DES and its descendants are block ciphers, and the rest of this lecture is built around that fact. A block cipher gives you a strong way to scramble 64 bits. Making that useful for a ten megabyte file is a separate problem, which is exactly what section three works through.</p>
+  </section>
+
+  <section class="block" id="des">
+    <div class="block-head reveal">
+      <span class="block-num">02</span>
+      <h2>Data Encryption Standard (DES)</h2>
+    </div>
+    <p class="block-dek reveal">A 64 bit block cipher built from 16 identical rounds of substitution and permutation.</p>
+
+    <p class="lede reveal">DES was developed by IBM in the early 1970s, refined from an earlier cipher called Lucifer, and adopted as a United States federal standard in 1977. For roughly two decades it was the default encryption algorithm across banking, government, and commercial systems. It is no longer considered secure on its own, its key is simply too short for modern hardware, but its internal design, the Feistel structure, is the direct ancestor of how block ciphers are still explained and analyzed today.</p>
+
+    <div class="card-grid reveal">
+      <div class="card"><span class="num">64</span><h4>Block size</h4><p>Every encryption operation processes exactly 64 bits of plaintext into 64 bits of ciphertext.</p></div>
+      <div class="card"><span class="num">56</span><h4>Effective key size</h4><p>The key is stored as 64 bits, but 8 of those are parity check bits, leaving 56 bits of real key material.</p></div>
+      <div class="card"><span class="num">16</span><h4>Rounds</h4><p>The same round function is applied 16 times in sequence, each time with a different 48-bit subkey.</p></div>
+      <div class="card"><span class="num">48</span><h4>Subkey size</h4><p>Each round consumes its own 48-bit round key, derived from the original 56-bit key through the key schedule.</p></div>
+    </div>
+
+    <h3 class="sub reveal">The Feistel structure</h3>
+    <p class="reveal">DES belongs to a family of ciphers called Feistel networks, named after Horst Feistel, who led the Lucifer project at IBM. The trick behind a Feistel network is that it turns any function F, even one that cannot be undone on its own, into an operation that can always be reversed. That matters because decryption has to be possible, and it means F itself can be as complicated and irregular as you like.</p>
+
+    <p class="reveal">Here is the mechanism. The 64-bit block is split into two 32-bit halves, called L (left) and R (right). In each round:</p>
+
+    <div class="flow-strip reveal">
+      <div class="flow-step"><span class="k">Step 1</span><h4>Feed R into F</h4><p>The right half and this round's subkey go into the round function F, producing a 32-bit output.</p></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step"><span class="k">Step 2</span><h4>XOR with L</h4><p>F's output is XORed with the left half. This becomes the new right half for the next round.</p></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step"><span class="k">Step 3</span><h4>Swap</h4><p>The old right half, untouched, becomes the new left half. L and R have effectively swapped roles.</p></div>
+    </div>
+
+    <p class="reveal">Step through the 16 rounds below. Each click advances one round and highlights what moves. Notice that R always becomes the new L unchanged, while a new R is built from the old L combined with F's output. That asymmetry, doing real work on one half while carrying the other half forward untouched, is what makes the whole thing reversible: to decrypt, you just run the identical structure with the subkeys in reverse order.</p>
+
+    <div class="feistel-widget reveal">
+      <div class="feistel-controls">
+        <div class="round-readout">Round <strong id="roundNum">0</strong> of 16</div>
+        <div class="feistel-buttons">
+          <button class="fbtn" id="fResetBtn" type="button">Reset</button>
+          <button class="fbtn" id="fPrevBtn" type="button">&larr; Prev</button>
+          <button class="fbtn primary" id="fNextBtn" type="button">Next round &rarr;</button>
+          <button class="fbtn" id="fPlayBtn" type="button">Auto-play</button>
+        </div>
+      </div>
+      <div class="feistel-stage">
+        <div class="lr-col">
+          <div class="lr-box" id="lBox">L<span class="sub" id="lSub">initial left half</span></div>
+          <div class="lr-box" id="rBox">R<span class="sub" id="rSub">initial right half</span></div>
+        </div>
+        <div class="fn-col">
+          <div class="f-box" id="fBox">
+            <div class="f-label">F</div>
+            <div class="f-key" id="fKeyLabel">waiting to start</div>
+          </div>
+          <div class="xor-badge">&oplus;</div>
+        </div>
+        <div class="lr-col">
+          <div class="lr-box" id="lBoxNext">L'<span class="sub">= old R</span></div>
+          <div class="lr-box" id="rBoxNext">R'<span class="sub">= L &oplus; F(R,K)</span></div>
+        </div>
+      </div>
+      <div class="feistel-caption" id="feistelCaption">Press "Next round" to start round 1 with subkey K1. This is a structural walkthrough: the boxes represent 32-bit halves, not real computed bit values.</div>
+    </div>
+
+    <h3 class="sub reveal">Inside the round function F</h3>
+    <p class="reveal">F is where DES's actual mixing happens. It takes the 32-bit right half and the round's 48-bit subkey and produces a new 32-bit value through 4 steps:</p>
+
+    <div class="flow-strip reveal">
+      <div class="flow-step"><span class="k">1. Expansion</span><h4>E: 32 &rarr; 48 bits</h4><p>Duplicates some bits so the 32-bit half can be XORed with a 48-bit subkey. Some input bits influence two output positions.</p></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step"><span class="k">2. Key mix</span><h4>XOR with Ki</h4><p>The expanded 48 bits are XORed with this round's 48-bit subkey, injecting the secret key into the data.</p></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step"><span class="k">3. Substitution</span><h4>8 S-boxes: 48 &rarr; 32 bits</h4><p>The 48 bits are split into 8 6-bit chunks, each passed through its own substitution table, producing 8 4-bit outputs.</p></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step"><span class="k">4. Permutation</span><h4>P: 32 &rarr; 32 bits</h4><p>The 32 bits from the S-boxes are reordered according to a fixed table, spreading each S-box's influence across the whole block.</p></div>
+    </div>
+
+    <p class="reveal">The S-boxes carry almost all of DES's real security. They are the only nonlinear part of the algorithm, the only part that cannot be described as simple bit shuffling, and their exact values were chosen deliberately (and, for years, controversially, since the design criteria were not published until decades later) to resist certain attacks.</p>
+
+    <h4 class="mini reveal">Worked example: how one S-box turns 6 bits into 4</h4>
+    <p class="reveal">Each S-box takes a 6-bit input. The outer two bits (the first and the last) select a row, and the inner 4 bits select a column. Try it with input <span class="mono">100110</span> through S-box S1.</p>
+
+    <div class="sbox-demo reveal">
+      <div class="sbox-legend">
+        <span><i class="row"></i> outer bits choose the row (0 to 3)</span>
+        <span><i class="col"></i> inner bits choose the column (0 to 15)</span>
+      </div>
+      <div class="sbox-bits">
+        <div class="sbox-bit row">1</div>
+        <div class="sbox-bit col">0</div>
+        <div class="sbox-bit col">0</div>
+        <div class="sbox-bit col">1</div>
+        <div class="sbox-bit col">1</div>
+        <div class="sbox-bit row">0</div>
+      </div>
+      <p style="text-align:center; margin-bottom: 4px;">Row bits <span class="mono">1_0</span> read as <span class="mono">10</span> = row 2. Column bits <span class="mono">0011</span> = column 3.</p>
+      <p style="text-align:center; margin-bottom: 0;">Looking up row 2, column 3 in the standard S1 table gives the value 8.</p>
+      <div class="sbox-result">
+        <div>S1[2][3] = <span class="big">8</span> = <span class="mono">1000</span> in binary</div>
+      </div>
+    </div>
+
+    <p class="reveal">That is one S-box producing 4 of the round's 32 output bits. The other seven S-boxes run the same lookup process on their own 6-bit slice, in parallel, each with its own table.</p>
+
+    <h3 class="sub reveal">Key schedule: deriving 16 subkeys from one key</h3>
+    <p class="reveal">DES never uses the 56-bit key directly. Instead, it runs a key schedule once at the start to produce 16 different 48-bit subkeys, one per round. The process: the 64-bit key is first reduced to 56 bits by dropping the 8 parity bits (via a table called PC-1), then split into two 28-bit halves, C and D. Before each round, both halves are rotated left by one or two bit positions (the exact amount is fixed per round), and a second table, PC-2, picks 48 of the resulting 56 bits to form that round's subkey.</p>
+
+    <div class="keysched reveal">
+      <div>
+        <div class="halfkey shift" id="cHalf">
+          <div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div>
+          <div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div>
+        </div>
+        <div class="keysched-label">C (28 bits, shown compressed)</div>
+      </div>
+      <div class="xor-badge" style="border-color: var(--ink-faint);">&hellip;</div>
+      <div>
+        <div class="halfkey shift" id="dHalf">
+          <div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div>
+          <div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div><div class="bitcell"></div>
+        </div>
+        <div class="keysched-label">D (28 bits, shown compressed)</div>
+      </div>
+    </div>
+    <p class="reveal" style="font-size: 14.5px; color: var(--ink-faint); text-align: center; margin-top: -6px;">Each half rotates left before every round. PC-2 then samples 48 bits from the rotated C and D to build that round's subkey Ki.</p>
+
+    <p class="reveal">Because C and D rotate a little further each round and PC-2 samples a different combination of positions every time, all 16 subkeys end up different from each other, even though every one of them is derived from the exact same original key.</p>
+
+    <h3 class="sub reveal">Initial and final permutation</h3>
+    <p class="reveal">Wrapped around the 16 Feistel rounds are two more steps: an Initial Permutation (IP) applied to the plaintext before round one, and its exact inverse (IP<sup>-1</sup>) applied after round 16. These two steps just reorder bits according to a fixed table. They contribute no cryptographic strength on their own, historically they were included to make the algorithm easier to wire into 1970s hardware, but they do have to be applied for standard DES output to match, so any implementation needs to include them.</p>
+
+    <details class="tables-toggle reveal">
+      <summary>Show the full reference tables (Initial Permutation, Expansion, P-box, key schedule tables, and the S1 substitution box)</summary>
+      <div class="inner">
+        <p style="font-size: 15px;">These are the exact fixed tables DES uses. You will not need to memorize them, but seeing the real values makes it concrete that "permutation" and "substitution" mean nothing more mysterious than looking numbers up in a table.</p>
+
+        <h4 class="mini">Initial Permutation, IP (bit position at output, reading left to right, top to bottom, tells you which input bit lands there)</h4>
+        <div class="bit-table-wrap">
+          <table class="bit-table"><tbody>
+            <tr><td>58</td><td>50</td><td>42</td><td>34</td><td>26</td><td>18</td><td>10</td><td>2</td></tr>
+            <tr><td>60</td><td>52</td><td>44</td><td>36</td><td>28</td><td>20</td><td>12</td><td>4</td></tr>
+            <tr><td>62</td><td>54</td><td>46</td><td>38</td><td>30</td><td>22</td><td>14</td><td>6</td></tr>
+            <tr><td>64</td><td>56</td><td>48</td><td>40</td><td>32</td><td>24</td><td>16</td><td>8</td></tr>
+            <tr><td>57</td><td>49</td><td>41</td><td>33</td><td>25</td><td>17</td><td>9</td><td>1</td></tr>
+            <tr><td>59</td><td>51</td><td>43</td><td>35</td><td>27</td><td>19</td><td>11</td><td>3</td></tr>
+            <tr><td>61</td><td>53</td><td>45</td><td>37</td><td>29</td><td>21</td><td>13</td><td>5</td></tr>
+            <tr><td>63</td><td>55</td><td>47</td><td>39</td><td>31</td><td>23</td><td>15</td><td>7</td></tr>
+          </tbody></table>
+        </div>
+
+        <h4 class="mini">Expansion table, E (32 input bits &rarr; 48 output bits, note several numbers repeat)</h4>
+        <div class="bit-table-wrap">
+          <table class="bit-table"><tbody>
+            <tr><td>32</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+            <tr><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+            <tr><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td></tr>
+            <tr><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td></tr>
+            <tr><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
+            <tr><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td></tr>
+            <tr><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td></tr>
+            <tr><td>28</td><td>29</td><td>30</td><td>31</td><td>32</td><td>1</td></tr>
+          </tbody></table>
+        </div>
+
+        <h4 class="mini">P permutation (reorders the 32-bit S-box output)</h4>
+        <div class="bit-table-wrap">
+          <table class="bit-table"><tbody>
+            <tr><td>16</td><td>7</td><td>20</td><td>21</td></tr>
+            <tr><td>29</td><td>12</td><td>28</td><td>17</td></tr>
+            <tr><td>1</td><td>15</td><td>23</td><td>26</td></tr>
+            <tr><td>5</td><td>18</td><td>31</td><td>10</td></tr>
+            <tr><td>2</td><td>8</td><td>24</td><td>14</td></tr>
+            <tr><td>32</td><td>27</td><td>3</td><td>9</td></tr>
+            <tr><td>19</td><td>13</td><td>30</td><td>6</td></tr>
+            <tr><td>22</td><td>11</td><td>4</td><td>25</td></tr>
+          </tbody></table>
+        </div>
+
+        <h4 class="mini">Left shift schedule (bit positions to rotate C and D before each of the 16 rounds)</h4>
+        <div class="bit-table-wrap">
+          <table class="bit-table"><tbody>
+            <tr><th>Round</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr>
+            <tr><th>Shift</th><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td></tr>
+          </tbody></table>
+        </div>
+
+        <h4 class="mini">S-box S1 (rows are indexed 0 to 3 by the outer bits, columns 0 to 15 by the inner bits)</h4>
+        <div class="bit-table-wrap">
+          <table class="bit-table"><tbody>
+            <tr><th>Row 0</th><td>14</td><td>4</td><td>13</td><td>1</td><td>2</td><td>15</td><td>11</td><td>8</td><td>3</td><td>10</td><td>6</td><td>12</td><td>5</td><td>9</td><td>0</td><td>7</td></tr>
+            <tr><th>Row 1</th><td>0</td><td>15</td><td>7</td><td>4</td><td>14</td><td>2</td><td>13</td><td>1</td><td>10</td><td>6</td><td>12</td><td>11</td><td>9</td><td>5</td><td>3</td><td>8</td></tr>
+            <tr><th>Row 2</th><td>4</td><td>1</td><td>14</td><td>8</td><td>13</td><td>6</td><td>2</td><td>11</td><td>15</td><td>12</td><td>9</td><td>7</td><td>3</td><td>10</td><td>5</td><td>0</td></tr>
+            <tr><th>Row 3</th><td>15</td><td>12</td><td>8</td><td>2</td><td>4</td><td>9</td><td>1</td><td>7</td><td>5</td><td>11</td><td>3</td><td>14</td><td>10</td><td>0</td><td>6</td><td>13</td></tr>
+          </tbody></table>
+        </div>
+        <p style="font-size: 14px; color: var(--ink-faint);">DES defines 8 such tables, S1 through S8, one per 6-bit chunk of the expanded half. Each was hand-picked to satisfy strict design criteria around avalanche and resistance to differential analysis.</p>
+      </div>
+    </details>
+
+    <h3 class="sub reveal">Decryption: the same machine, run backward</h3>
+    <p class="reveal">This is the payoff of the Feistel structure. Decrypting with DES uses the identical sequence of steps, the same F function, the same S-boxes, the same everything, except the 16 subkeys are applied in reverse order: K16 first, K1 last. No separate decryption algorithm has to be designed or implemented. That symmetry is a large part of why Feistel networks became the dominant block cipher design for decades.</p>
+
+    <h3 class="sub reveal">Why DES eventually failed</h3>
+    <p class="reveal">DES's structure has held up remarkably well against decades of cryptanalysis; no practical shortcut attack meaningfully beats brute force. Its weakness is simply arithmetic: 56 bits means 2<sup>56</sup>, about 72 quadrillion, possible keys. In 1977 that was computationally out of reach. By 1998 the Electronic Frontier Foundation built a purpose-made machine, nicknamed Deep Crack, that found a DES key by brute force in under three days. Today a determined attacker with modern hardware can do it faster still. The algorithm's internal design was never the problem. The key was simply too short for the hardware that eventually caught up to it, which is precisely the motivation for section four.</p>
+  </section>
+
+
+
+  <section class="block" id="ede">
+    <div class="block-head reveal">
+      <span class="block-num">03</span>
+      <h2>Multiple Encryption DES (EDE)</h2>
+    </div>
+    <p class="block-dek reveal">Running DES three times, encrypt, decrypt, encrypt, to outrun a 56-bit key without redesigning the cipher.</p>
+
+    <p class="lede reveal">Once the 56-bit key became a real liability, the industry needed a fix that did not require replacing every DES chip and piece of software already deployed. The answer was to keep DES exactly as it was and simply apply it more than once, using multiple independent keys.</p>
+
+    <h3 class="sub reveal">Why not just encrypt twice?</h3>
+    <p class="reveal">The obvious first idea, double DES with two keys K1 and K2, computing C = E<sub>K2</sub>(E<sub>K1</sub>(P)), looks like it should square the effort needed to break it, roughly 2<sup>112</sup> instead of 2<sup>56</sup>. It does not. A technique called the meet in the middle attack defeats double DES using only roughly double the work of breaking single DES, not the square of it. The attacker encrypts the known plaintext forward under every possible K1 and separately decrypts the known ciphertext backward under every possible K2, storing both lists and looking for a match in the middle. That collapses the effective security of double DES to only a little more than single DES, which made it not worth the extra computation.</p>
+
+    <h3 class="sub reveal">The EDE construction</h3>
+    <p class="reveal">Triple DES, formally called Triple DES EDE (Encrypt, Decrypt, Encrypt), sidesteps the meet in the middle weakness by using three keys and three operations in this specific order:</p>
+
+    <div class="definition reveal">
+      <span class="label">Formula</span>
+      <p class="mono" style="font-size: 19px;">C = E<sub>K3</sub>( D<sub>K2</sub>( E<sub>K1</sub>(P) ) )</p>
+    </div>
+
+    <p class="reveal">Watch the block move through all three stages below.</p>
+
+    <div class="ede-pipeline reveal">
+      <div class="ede-stage">
+        <div class="ede-tag">Plaintext P</div>
+        <div class="ede-box"><span>E</span><span class="keylabel">K1</span></div>
+        <div class="ede-tag">Encrypt</div>
+      </div>
+      <div class="ede-arrow">&rarr;</div>
+      <div class="ede-stage">
+        <div class="ede-tag">Intermediate</div>
+        <div class="ede-box decrypt"><span>D</span><span class="keylabel">K2</span></div>
+        <div class="ede-tag">Decrypt</div>
+      </div>
+      <div class="ede-arrow">&rarr;</div>
+      <div class="ede-stage">
+        <div class="ede-tag">Intermediate</div>
+        <div class="ede-box"><span>E</span><span class="keylabel">K3</span></div>
+        <div class="ede-tag">Encrypt</div>
+      </div>
+      <div class="ede-arrow">&rarr;</div>
+      <div class="ede-stage">
+        <div class="ede-tag">Ciphertext C</div>
+      </div>
+    </div>
+
+    <h4 class="mini reveal">Why the middle step is a decryption, not another encryption</h4>
+    <p class="reveal">The middle decrypt step is a deliberate compatibility trick, not a security requirement. Set K1, K2, and K3 all equal to the same key, and the decrypt in the middle cancels the encrypt right before it, leaving the whole construction behaving exactly like a single, ordinary DES encryption with that one key. This lets 3DES-capable hardware and software stay fully backward compatible with systems that only ever spoke plain single DES, simply by feeding it three identical keys.</p>
+
+    <div class="card-grid reveal">
+      <div class="card"><span class="tag">3-key 3DES</span><h4>K1, K2, K3 all different</h4><p>168 bits of raw key material. Because of meet in the middle style attacks the effective security is closer to 112 bits, still far beyond brute force with current technology.</p></div>
+      <div class="card"><span class="tag">2-key 3DES</span><h4>K1 = K3, K2 different</h4><p>112 bits of raw key material, a common cost saving variant. Effective security is somewhat lower still, and this variant is now discouraged in new designs.</p></div>
+      <div class="card"><span class="tag">1-key (K1=K2=K3)</span><h4>Backward compatible mode</h4><p>Behaves identically to single DES. Exists purely so 3DES hardware can talk to legacy single DES systems.</p></div>
+    </div>
+
+    <h3 class="sub reveal">The cost of the fix</h3>
+    <p class="reveal">3DES buys back security by paying with speed: it runs DES three full times per block, so it is roughly three times slower than single DES and noticeably slower than AES, which was designed from scratch afterward specifically to replace both. The bars below give a rough sense of how brute force difficulty scales with effective key length; each additional bit doubles the work required.</p>
+
+    <div class="bruteforce reveal" id="bruteforce">
+      <div class="bf-row">
+        <div class="bf-label">Single DES, 56 bit</div>
+        <div class="bf-track"><div class="bf-fill" data-width="8"></div></div>
+        <div class="bf-val">2<sup>56</sup></div>
+      </div>
+      <div class="bf-row">
+        <div class="bf-label">Double DES (effective)</div>
+        <div class="bf-track"><div class="bf-fill" data-width="12"></div></div>
+        <div class="bf-val">~2<sup>57</sup></div>
+      </div>
+      <div class="bf-row">
+        <div class="bf-label">2-key 3DES (effective)</div>
+        <div class="bf-track"><div class="bf-fill" data-width="60"></div></div>
+        <div class="bf-val">~2<sup>80</sup></div>
+      </div>
+      <div class="bf-row">
+        <div class="bf-label">3-key 3DES (effective)</div>
+        <div class="bf-track"><div class="bf-fill" data-width="85"></div></div>
+        <div class="bf-val">~2<sup>112</sup></div>
+      </div>
+      <div class="bf-row">
+        <div class="bf-label">AES-128, for comparison</div>
+        <div class="bf-track"><div class="bf-fill" data-width="100"></div></div>
+        <div class="bf-val">2<sup>128</sup></div>
+      </div>
+    </div>
+    <p class="reveal" style="font-size: 14px; color: var(--ink-faint); text-align: center; margin-top: -10px;">Bar lengths are on a rough logarithmic scale to show relative order of magnitude, not exact proportional key strength.</p>
+
+    <p class="reveal">3DES is still found in legacy systems today, older payment card terminals and some banking infrastructure in particular, because of how deeply it was embedded before AES arrived in 2001. It has been formally deprecated by NIST for new use since 2023. For any new design, AES is the correct default, but understanding 3DES's EDE construction is what makes clear why simply chaining a weak cipher twice does not automatically double its strength, a lesson that generalizes well beyond DES.</p>
+  </section>
+
+  <section class="block" id="takeaways">
+    <div class="block-head reveal">
+      <span class="block-num">05</span>
+      <h2>Key takeaways</h2>
+    </div>
+
+    <div class="takeaway reveal" id="takeawayBox">
+      <span class="label">Before the next lecture</span>
+      <ol>
+        <li>Secret key cryptography uses one shared key for both encryption and decryption, which makes key distribution the central practical challenge.</li>
+        <li>DES encrypts 64-bit blocks through 16 Feistel rounds, each mixing in a different 48-bit subkey derived by the key schedule from a single 56-bit key.</li>
+        <li>The Feistel structure makes decryption free: run the identical algorithm with subkeys in reverse order.</li>
+        <li>Triple DES (EDE) chains encrypt, decrypt, encrypt with up to three keys to defeat the meet in the middle attack that breaks naive double DES, buying more effective key strength at roughly three times the computation.</li>
+      </ol>
+      <p class="closing">Next lecture moves from symmetric to asymmetric cryptography: how two parties can establish a shared secret, or verify each other's identity, without ever exchanging a key over a private channel first.</p>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>DS5103</span>
+    <span>sachin@foc.sab.ac.lk</span>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  /* ---------- Theme toggle ---------- */
+  var root = document.documentElement;
+  var toggle = document.getElementById('themeToggle');
+  var label = document.getElementById('themeLabel');
+
+  function applyTheme(t) {
+    if (t === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      label.textContent = 'Dark';
+    } else {
+      root.setAttribute('data-theme', 'light');
+      label.textContent = 'Light';
+    }
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('des-notes-theme'); } catch (e) {}
+  if (!saved) {
+    saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  applyTheme(saved);
+
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem('des-notes-theme', next); } catch (e) {}
+  });
+
+  /* ---------- Scroll progress bar ---------- */
+  var bar = document.getElementById('progressBar');
+  function updateProgress() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    var pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
+    if (bar) bar.style.width = pct + '%';
+  }
+  document.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  /* ---------- Reveal on scroll ---------- */
+  var targets = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    targets.forEach(function (el) { io.observe(el); });
+  } else {
+    targets.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  /* ---------- TOC active link ---------- */
+  var sections = document.querySelectorAll('section.block');
+  var links = document.querySelectorAll('.toc a');
+  function setActive() {
+    var pos = window.scrollY + 120;
+    var current = null;
+    sections.forEach(function (sec) { if (sec.offsetTop <= pos) current = sec.id; });
+    links.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+  }
+  document.addEventListener('scroll', setActive, { passive: true });
+  setActive();
+
+  /* ---------- Feistel round stepper ---------- */
+  var round = 0;
+  var maxRound = 16;
+  var roundNum = document.getElementById('roundNum');
+  var lBox = document.getElementById('lBox');
+  var rBox = document.getElementById('rBox');
+  var lSub = document.getElementById('lSub');
+  var rSub = document.getElementById('rSub');
+  var fBox = document.getElementById('fBox');
+  var fKeyLabel = document.getElementById('fKeyLabel');
+  var caption = document.getElementById('feistelCaption');
+  var prevBtn = document.getElementById('fPrevBtn');
+  var nextBtn = document.getElementById('fNextBtn');
+  var resetBtn = document.getElementById('fResetBtn');
+  var playBtn = document.getElementById('fPlayBtn');
+  var playTimer = null;
+
+  function renderFeistel() {
+    roundNum.textContent = round;
+    if (round === 0) {
+      lSub.textContent = 'initial left half';
+      rSub.textContent = 'initial right half';
+      fKeyLabel.textContent = 'waiting to start';
+      fBox.classList.remove('active');
+      caption.textContent = 'Press "Next round" to start round 1 with subkey K1. This is a structural walkthrough: the boxes represent 32-bit halves, not real computed bit values.';
+    } else {
+      lSub.textContent = round === 1 ? '= R0 (old right half)' : '= R' + (round - 1);
+      rSub.textContent = 'L' + (round - 1) + ' ⊕ F(R' + (round - 1) + ', K' + round + ')';
+      fKeyLabel.textContent = 'subkey K' + round + ' mixed in here';
+      fBox.classList.add('active');
+      if (round === maxRound) {
+        caption.textContent = 'Round 16 complete. After a final swap correction and the inverse initial permutation, this becomes the 64-bit ciphertext block.';
+      } else {
+        caption.textContent = 'Round ' + round + ' of 16 complete. R' + round + ' carries forward untouched as the new left half, while the new right half absorbs this round’s key.';
+      }
+    }
+    prevBtn.disabled = round === 0;
+    nextBtn.disabled = round === maxRound;
+    if (round === maxRound && playTimer) { clearInterval(playTimer); playTimer = null; playBtn.textContent = 'Auto-play'; }
+
+    lBox.classList.add('flash'); rBox.classList.add('flash');
+    setTimeout(function () { lBox.classList.remove('flash'); rBox.classList.remove('flash'); }, 350);
+  }
+
+  nextBtn.addEventListener('click', function () { if (round < maxRound) { round++; renderFeistel(); } });
+  prevBtn.addEventListener('click', function () { if (round > 0) { round--; renderFeistel(); } });
+  resetBtn.addEventListener('click', function () { round = 0; if (playTimer) { clearInterval(playTimer); playTimer = null; playBtn.textContent = 'Auto-play'; } renderFeistel(); });
+  playBtn.addEventListener('click', function () {
+    if (playTimer) {
+      clearInterval(playTimer); playTimer = null; playBtn.textContent = 'Auto-play';
+    } else {
+      if (round >= maxRound) round = 0;
+      playBtn.textContent = 'Stop';
+      playTimer = setInterval(function () {
+        if (round >= maxRound) { clearInterval(playTimer); playTimer = null; playBtn.textContent = 'Auto-play'; return; }
+        round++; renderFeistel();
+      }, 900);
+    }
+  });
+  renderFeistel();
+
+  /* ---------- Mode of operation tabs ---------- */
+  var tabs = document.querySelectorAll('.mode-tab');
+  var panels = document.querySelectorAll('.mode-panel');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var mode = tab.getAttribute('data-mode');
+      tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+      panels.forEach(function (p) {
+        var match = p.getAttribute('data-mode-panel') === mode;
+        p.classList.toggle('active', match);
+        if (match) p.classList.add('in');
+      });
+    });
+  });
+
+  /* ---------- Brute force bars fill on scroll into view ---------- */
+  var bfContainer = document.getElementById('bruteforce');
+  if (bfContainer && 'IntersectionObserver' in window) {
+    var bfIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.bf-fill').forEach(function (fill) {
+            fill.style.width = fill.getAttribute('data-width') + '%';
+          });
+          bfIo.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    bfIo.observe(bfContainer);
+  }
+})();
+</script>
+
+</body>
+</html>
